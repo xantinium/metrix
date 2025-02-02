@@ -7,19 +7,19 @@ import "fmt"
 type MetricType string
 
 const (
-	// GAUGE перезаписываемая метрика.
-	GAUGE MetricType = "gauge"
-	// COUNTER суммируемая метрика.
-	COUNTER MetricType = "counter"
+	// Gauge перезаписываемая метрика.
+	Gauge MetricType = "gauge"
+	// Counter суммируемая метрика.
+	Counter MetricType = "counter"
 )
 
 // ParseStringAsMetricType парсит строку в тип метрики.
 func ParseStringAsMetricType(maybeMetricType string) (MetricType, error) {
 	switch maybeMetricType {
-	case string(GAUGE):
-		return GAUGE, nil
-	case string(COUNTER):
-		return COUNTER, nil
+	case string(Gauge):
+		return Gauge, nil
+	case string(Counter):
+		return Counter, nil
 	default:
 		return "", fmt.Errorf("unknown metric type")
 	}

@@ -12,9 +12,9 @@ type httpMethod = string
 
 const (
 	// HTTP-метод "GET"
-	METHOD_GET httpMethod = http.MethodGet
+	MethodGet httpMethod = http.MethodGet
 	// HTTP-метод "POST"
-	METHOD_POST httpMethod = http.MethodPost
+	MethodPost httpMethod = http.MethodPost
 )
 
 // server интерфейс сервера, доступного в хендлерах.

@@ -18,9 +18,9 @@ func UpdateMetric(s server, r *http.Request) (int, []byte, error) {
 	metricsRepo := s.GetMetricsRepo()
 
 	switch req.metricType {
-	case models.GAUGE:
+	case models.Gauge:
 		err = metricsRepo.UpdateGaugeMetric(req.metricName, req.metricValue)
-	case models.COUNTER:
+	case models.Counter:
 		err = metricsRepo.UpdateCounterMetric(req.metricName, int64(req.metricValue))
 	}
 
