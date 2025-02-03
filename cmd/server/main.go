@@ -29,6 +29,8 @@ func main() {
 			if err != nil {
 				log.Println(fmt.Errorf("failed to gracefully stop metrix server: %v", err))
 			}
+
+			return
 		}
 	}
 }
