@@ -54,7 +54,8 @@ func (agent *MetrixAgent) UpdateMetrics() {
 	metrics := agent.metricsSource.GetSnapshot()
 
 	for _, metric := range metrics {
-		_, err := http.Post(agent.getUpdateMetricHandlerUrl(metric), "text/plain", nil)
+		resp, err := http.Post(agent.getUpdateMetricHandlerURL(metric), "text/plain", nil)
+		resp.Body.Close()
 		if err != nil {
 			log.Printf("failed to update metric: %v", err)
 		}
@@ -62,11 +63,11 @@ func (agent *MetrixAgent) UpdateMetrics() {
 }
 
 // getHandlerUrl создаёт URL-адрес для запроса на обновление метрик.
-func (agent MetrixAgent) getUpdateMetricHandlerUrl(metric models.MetricInfo) string {
+func (agent MetrixAgent) getUpdateMetricHandlerURL(metric models.MetricInfo) string {
 	b := strings.Builder{}
 
 	b.WriteString(agent.serverAddr)
-	b.WriteString("/")
+	b.WriteString("/update/")
 	b.WriteString(string(metric.Type()))
 	b.WriteString("/")
 	b.WriteString(metric.Name())
