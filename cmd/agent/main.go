@@ -10,7 +10,7 @@ import (
 
 func main() {
 	agent := agent.NewMetrixAgent(agent.MetrixAgentOptions{
-		ServerAddr:     ":8080",
+		ServerAddr:     "localhost:8080",
 		PollInterval:   2,
 		ReportInterval: 10,
 	})
