@@ -59,7 +59,9 @@ func (agent *MetrixAgent) UpdateMetrics() {
 			log.Printf("failed to update metric: %v", err)
 		}
 
-		resp.Body.Close()
+		if resp != nil {
+			resp.Body.Close()
+		}
 	}
 }
 
