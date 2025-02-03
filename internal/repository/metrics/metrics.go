@@ -13,6 +13,26 @@ type MetricsRepository struct {
 	storage MetricsStorage
 }
 
+// GetGaugeMetric возвращает метрику типа GAUGE по имени name.
+func (repo *MetricsRepository) GetGaugeMetric(name string) (float64, error) {
+	value, err := repo.storage.GetGaugeMetric(name)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get gauge metric value name=%s: %v", name, err)
+	}
+
+	return value, nil
+}
+
+// GetCounterMetric возвращает метрику типа COUNTER по имени name.
+func (repo *MetricsRepository) GetCounterMetric(name string) (int64, error) {
+	value, err := repo.storage.GetCounterMetric(name)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get counter metric value name=%s: %v", name, err)
+	}
+
+	return value, nil
+}
+
 // UpdateGaugeMetric обновляет текущее значение метрики типа GAUGE
 // с именем name, перезаписывая его значением value.
 func (repo *MetricsRepository) UpdateGaugeMetric(name string, value float64) error {

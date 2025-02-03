@@ -14,9 +14,25 @@ func NewMemStorage() *MemStorage {
 
 // MemStorage структура, реализующая хранилище метрик.
 type MemStorage struct {
-	mx             sync.Mutex
+	mx             sync.RWMutex
 	gaugeMetrics   map[string]float64
 	counterMetrics map[string]int64
+}
+
+// GetGaugeMetric возвращает метрику типа GAUGE по имени name.
+func (storage *MemStorage) GetGaugeMetric(name string) (float64, error) {
+	storage.mx.RLock()
+	defer storage.mx.RUnlock()
+
+	return storage.gaugeMetrics[name], nil
+}
+
+// GetCounterMetric возвращает метрику типа COUNTER по имени name.
+func (storage *MemStorage) GetCounterMetric(name string) (int64, error) {
+	storage.mx.RLock()
+	defer storage.mx.RUnlock()
+
+	return storage.counterMetrics[name], nil
 }
 
 // UpdateGaugeMetric обновляет текущее значение метрики типа GAUGE
