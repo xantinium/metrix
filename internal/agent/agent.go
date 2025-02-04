@@ -4,11 +4,11 @@ package agent
 import (
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/xantinium/metrix/internal/infrastructure/runtimemetrics"
 	"github.com/xantinium/metrix/internal/models"
+	"github.com/xantinium/metrix/internal/tools"
 )
 
 // MetrixAgentOptions параметры агента метрик.
@@ -79,18 +79,10 @@ func (agent MetrixAgent) getUpdateMetricHandlerURL(metric models.MetricInfo) str
 
 	switch metric.Type() {
 	case models.Gauge:
-		b.WriteString(floatToStr(metric.GaugeValue()))
+		b.WriteString(tools.FloatToStr(metric.GaugeValue()))
 	case models.Counter:
-		b.WriteString(intToStr(metric.CounterValue()))
+		b.WriteString(tools.IntToStr(metric.CounterValue()))
 	}
 
 	return b.String()
-}
-
-func floatToStr(v float64) string {
-	return strconv.FormatFloat(v, 'f', -1, 64)
-}
-
-func intToStr(v int64) string {
-	return strconv.FormatInt(v, 10)
 }

@@ -3,11 +3,11 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/xantinium/metrix/internal/models"
+	"github.com/xantinium/metrix/internal/tools"
 )
 
 // UpdateMetricHandler реализация хендлера для обновления метрик.
@@ -69,7 +69,7 @@ func parseUpdateMetricRequest(r *gin.Context) (updateMetricRequest, error) {
 		return updateMetricRequest{}, fmt.Errorf("metric value is missing")
 	}
 
-	metricValue, err = strconv.ParseFloat(maybeMetricValue, 64)
+	metricValue, err = tools.StrToFloat(maybeMetricValue)
 	if err != nil {
 		return updateMetricRequest{}, fmt.Errorf("invalid metric value")
 	}
