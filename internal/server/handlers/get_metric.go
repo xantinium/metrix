@@ -13,7 +13,7 @@ import (
 
 // GetMetricHandler реализация хендлера для получения метрик.
 func GetMetricHandler(ctx *gin.Context, s server) (int, []byte, error) {
-	req, err := parseGetMetricRequest(ctx.Request)
+	req, err := parseGetMetricRequest(ctx)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}
@@ -72,14 +72,14 @@ type getMetricRequest struct {
 }
 
 // parseGetMetricRequest парсит сырой HTTP-запрос в структуру запроса.
-func parseGetMetricRequest(r *http.Request) (getMetricRequest, error) {
+func parseGetMetricRequest(r *gin.Context) (getMetricRequest, error) {
 	var (
 		err                         error
 		maybeMetricType, metricName string
 		metricType                  models.MetricType
 	)
 
-	maybeMetricType = r.PathValue("type")
+	maybeMetricType = r.Param("type")
 	if maybeMetricType == "" {
 		return getMetricRequest{}, fmt.Errorf("metric type is missing")
 	}
@@ -89,7 +89,7 @@ func parseGetMetricRequest(r *http.Request) (getMetricRequest, error) {
 		return getMetricRequest{}, err
 	}
 
-	metricName = r.PathValue("name")
+	metricName = r.Param("name")
 	if metricName == "" {
 		return getMetricRequest{}, fmt.Errorf("metric name is missing")
 	}

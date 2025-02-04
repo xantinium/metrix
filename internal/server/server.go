@@ -43,8 +43,8 @@ func NewMetrixServer(port int) *MetrixServer {
 		metricsRepo: metrics.NewMetricsRepository(metricsStorage),
 	}
 
-	handlers.RegisterHandler(internalServer, handlers.MethodPost, "/value/{type}/{name}", handlers.GetMetricHandler)
-	handlers.RegisterHandler(internalServer, handlers.MethodPost, "/update/{type}/{name}/{value}", handlers.UpdateMetricHandler)
+	handlers.RegisterHandler(internalServer, handlers.MethodPost, "/value/:type/:name", handlers.GetMetricHandler)
+	handlers.RegisterHandler(internalServer, handlers.MethodPost, "/update/:type/:name/:value", handlers.UpdateMetricHandler)
 
 	return &MetrixServer{
 		port: port,

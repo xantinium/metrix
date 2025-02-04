@@ -12,7 +12,7 @@ import (
 
 // UpdateMetricHandler реализация хендлера для обновления метрик.
 func UpdateMetricHandler(ctx *gin.Context, s server) (int, []byte, error) {
-	req, err := parseUpdateMetricRequest(ctx.Request)
+	req, err := parseUpdateMetricRequest(ctx)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}
@@ -41,7 +41,7 @@ type updateMetricRequest struct {
 }
 
 // parseUpdateMetricRequest парсит сырой HTTP-запрос в структуру запроса.
-func parseUpdateMetricRequest(r *http.Request) (updateMetricRequest, error) {
+func parseUpdateMetricRequest(r *gin.Context) (updateMetricRequest, error) {
 	var (
 		err                                           error
 		maybeMetricType, metricName, maybeMetricValue string
@@ -49,7 +49,7 @@ func parseUpdateMetricRequest(r *http.Request) (updateMetricRequest, error) {
 		metricValue                                   float64
 	)
 
-	maybeMetricType = r.PathValue("type")
+	maybeMetricType = r.Param("type")
 	if maybeMetricType == "" {
 		return updateMetricRequest{}, fmt.Errorf("metric type is missing")
 	}
@@ -59,12 +59,12 @@ func parseUpdateMetricRequest(r *http.Request) (updateMetricRequest, error) {
 		return updateMetricRequest{}, err
 	}
 
-	metricName = r.PathValue("name")
+	metricName = r.Param("name")
 	if metricName == "" {
 		return updateMetricRequest{}, fmt.Errorf("metric name is missing")
 	}
 
-	maybeMetricValue = r.PathValue("value")
+	maybeMetricValue = r.Param("value")
 	if maybeMetricValue == "" {
 		return updateMetricRequest{}, fmt.Errorf("metric value is missing")
 	}
