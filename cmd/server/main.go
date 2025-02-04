@@ -7,13 +7,16 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/xantinium/metrix/internal/config"
 	"github.com/xantinium/metrix/internal/server"
 )
 
 func main() {
 	var err error
 
-	server := server.NewMetrixServer(8080)
+	args := config.ParseServerArgs()
+
+	server := server.NewMetrixServer(args.Addr)
 
 	for {
 		select {

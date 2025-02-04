@@ -4,7 +4,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -36,7 +35,7 @@ func (server *internalMetrixServer) GetMetricsRepo() *metrics.MetricsRepository 
 }
 
 // NewMetrixServer создаёт новый сервер метрик.
-func NewMetrixServer(port int) *MetrixServer {
+func NewMetrixServer(addr string) *MetrixServer {
 	metricsStorage := memstorage.NewMemStorage()
 
 	router := gin.New()
@@ -52,9 +51,8 @@ func NewMetrixServer(port int) *MetrixServer {
 	handlers.RegisterHandler(internalServer, handlers.MethodPost, "/update/:type/:name/:value", handlers.UpdateMetricHandler)
 
 	return &MetrixServer{
-		port: port,
 		server: &http.Server{
-			Addr:    fmt.Sprintf(":%d", port),
+			Addr:    addr,
 			Handler: router,
 		},
 		internalServer: internalServer,
@@ -63,7 +61,6 @@ func NewMetrixServer(port int) *MetrixServer {
 
 // MetrixServer структура, описывающая сервер метрик.
 type MetrixServer struct {
-	port           int
 	server         *http.Server
 	internalServer *internalMetrixServer
 }

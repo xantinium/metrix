@@ -6,13 +6,16 @@ import (
 	"syscall"
 
 	"github.com/xantinium/metrix/internal/agent"
+	"github.com/xantinium/metrix/internal/config"
 )
 
 func main() {
+	args := config.ParseAgentArgs()
+
 	agent := agent.NewMetrixAgent(agent.MetrixAgentOptions{
-		ServerAddr:     "localhost:8080",
-		PollInterval:   2,
-		ReportInterval: 10,
+		ServerAddr:     args.Addr,
+		PollInterval:   args.PollInterval,
+		ReportInterval: args.ReportInterval,
 	})
 
 	agent.Run()
