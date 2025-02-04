@@ -1,7 +1,9 @@
 // Пакет metrics содержит репозиторий для работы с метриками.
 package metrics
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // NewMetricsRepository создаёт новый репозиторий метрик.
 func NewMetricsRepository(storage MetricsStorage) *MetricsRepository {
@@ -15,22 +17,12 @@ type MetricsRepository struct {
 
 // GetGaugeMetric возвращает метрику типа GAUGE по имени name.
 func (repo *MetricsRepository) GetGaugeMetric(name string) (float64, error) {
-	value, err := repo.storage.GetGaugeMetric(name)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get gauge metric value name=%s: %v", name, err)
-	}
-
-	return value, nil
+	return repo.storage.GetGaugeMetric(name)
 }
 
 // GetCounterMetric возвращает метрику типа COUNTER по имени name.
 func (repo *MetricsRepository) GetCounterMetric(name string) (int64, error) {
-	value, err := repo.storage.GetCounterMetric(name)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get counter metric value name=%s: %v", name, err)
-	}
-
-	return value, nil
+	return repo.storage.GetCounterMetric(name)
 }
 
 // UpdateGaugeMetric обновляет текущее значение метрики типа GAUGE

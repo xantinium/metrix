@@ -10,8 +10,8 @@ import (
 	"github.com/xantinium/metrix/internal/models"
 )
 
-// UpdateMetric реализация хендлера для обновления метрик.
-func UpdateMetric(ctx *gin.Context, s server) (int, []byte, error) {
+// UpdateMetricHandler реализация хендлера для обновления метрик.
+func UpdateMetricHandler(ctx *gin.Context, s server) (int, []byte, error) {
 	req, err := parseUpdateMetricRequest(ctx.Request)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
