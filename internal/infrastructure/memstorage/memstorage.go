@@ -49,6 +49,23 @@ func (storage *MemStorage) GetCounterMetric(name string) (int64, error) {
 	return value, nil
 }
 
+// GetAllMetrics возвращает все существующие метрики.
+func (storage *MemStorage) GetAllMetrics() ([]models.MetricInfo, error) {
+	storage.mx.RLock()
+	defer storage.mx.RUnlock()
+
+	metrics := make([]models.MetricInfo, len(storage.gaugeMetrics)+len(storage.counterMetrics))
+
+	for name, value := range storage.gaugeMetrics {
+		metrics = append(metrics, models.NewGaugeMetric(name, value))
+	}
+	for name, value := range storage.counterMetrics {
+		metrics = append(metrics, models.NewCounterMetric(name, value))
+	}
+
+	return metrics, nil
+}
+
 // UpdateGaugeMetric обновляет текущее значение метрики типа GAUGE
 // с именем name, перезаписывая его значением value.
 func (storage *MemStorage) UpdateGaugeMetric(name string, value float64) error {

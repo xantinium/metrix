@@ -3,6 +3,8 @@ package metrics
 
 import (
 	"fmt"
+
+	"github.com/xantinium/metrix/internal/models"
 )
 
 // NewMetricsRepository создаёт новый репозиторий метрик.
@@ -45,4 +47,14 @@ func (repo *MetricsRepository) UpdateCounterMetric(name string, value int64) err
 	}
 
 	return nil
+}
+
+// GetAllMetrics возвращает все существующие метрики.
+func (repo *MetricsRepository) GetAllMetrics() ([]models.MetricInfo, error) {
+	metrics, err := repo.storage.GetAllMetrics()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all metrics: %v", err)
+	}
+
+	return metrics, nil
 }
