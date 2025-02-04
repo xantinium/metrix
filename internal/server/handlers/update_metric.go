@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/xantinium/metrix/internal/models"
 )
 
 // UpdateMetric реализация хендлера для обновления метрик.
-func UpdateMetric(s server, r *http.Request) (int, []byte, error) {
-	req, err := parseUpdateMetricRequest(r)
+func UpdateMetric(ctx *gin.Context, s server) (int, []byte, error) {
+	req, err := parseUpdateMetricRequest(ctx.Request)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}

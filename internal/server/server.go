@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/xantinium/metrix/internal/infrastructure/memstorage"
 	"github.com/xantinium/metrix/internal/repository/metrics"
 	"github.com/xantinium/metrix/internal/server/handlers"
@@ -16,13 +17,13 @@ import (
 // internalMetrixServer внутренняя структура сервера.
 // Является реализацией интерфейса сервера, получаемого хендлерами.
 type internalMetrixServer struct {
-	mux         *http.ServeMux
+	router      *gin.Engine
 	metricsRepo *metrics.MetricsRepository
 }
 
-// GetInternalMux возвращает используемый http.ServeMux.
-func (server *internalMetrixServer) GetInternalMux() *http.ServeMux {
-	return server.mux
+// GetInternalRouter возвращает используемый роутер.
+func (server *internalMetrixServer) GetInternalRouter() *gin.Engine {
+	return server.router
 }
 
 // GetMetricsRepo возвращает репозиторий метрик.
@@ -34,8 +35,11 @@ func (server *internalMetrixServer) GetMetricsRepo() *metrics.MetricsRepository 
 func NewMetrixServer(port int) *MetrixServer {
 	metricsStorage := memstorage.NewMemStorage()
 
+	router := gin.New()
+	router.Use(gin.Recovery())
+
 	internalServer := &internalMetrixServer{
-		mux:         http.NewServeMux(),
+		router:      router,
 		metricsRepo: metrics.NewMetricsRepository(metricsStorage),
 	}
 
@@ -45,7 +49,7 @@ func NewMetrixServer(port int) *MetrixServer {
 		port: port,
 		server: &http.Server{
 			Addr:    fmt.Sprintf(":%d", port),
-			Handler: internalServer.mux,
+			Handler: router,
 		},
 		internalServer: internalServer,
 	}

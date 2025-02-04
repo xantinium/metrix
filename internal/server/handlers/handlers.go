@@ -2,8 +2,10 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/xantinium/metrix/internal/repository/metrics"
 )
 
@@ -19,30 +21,27 @@ const (
 
 // server интерфейс сервера, доступного в хендлерах.
 type server interface {
-	GetInternalMux() *http.ServeMux
+	GetInternalRouter() *gin.Engine
 	GetMetricsRepo() *metrics.MetricsRepository
 }
 
 // httpHandler общий тип для всех хендлеров.
-type httpHandler = func(server, *http.Request) (int, []byte, error)
+type httpHandler = func(*gin.Context, server) (int, []byte, error)
 
 // RegisterHandler добавляет хендлер handler в качестве обработчика
 // паттерна pattern для метода method.
 func RegisterHandler(server server, method httpMethod, pattern string, handler httpHandler) {
-	server.GetInternalMux().HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != method {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		statusCode, response, err := handler(server, r)
+	server.GetInternalRouter().Handle(method, pattern, func(ctx *gin.Context) {
+		statusCode, response, err := handler(ctx, server)
 		if err != nil {
-			w.WriteHeader(statusCode)
-			w.Write([]byte(err.Error()))
+			ctx.JSON(statusCode, createErrResp(err))
 			return
 		}
 
-		w.WriteHeader(statusCode)
-		w.Write(response)
+		ctx.JSON(statusCode, response)
 	})
+}
+
+func createErrResp(err error) []byte {
+	return []byte(fmt.Sprintf("{\"err\":\"%s\"}", err))
 }
