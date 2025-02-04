@@ -11,10 +11,10 @@ import (
 )
 
 // UpdateMetricHandler реализация хендлера для обновления метрик.
-func UpdateMetricHandler(ctx *gin.Context, s server) (int, []byte, error) {
+func UpdateMetricHandler(ctx *gin.Context, s server) (int, string, error) {
 	req, err := parseUpdateMetricRequest(ctx)
 	if err != nil {
-		return http.StatusBadRequest, nil, err
+		return http.StatusBadRequest, "", err
 	}
 
 	metricsRepo := s.GetMetricsRepo()
@@ -27,10 +27,10 @@ func UpdateMetricHandler(ctx *gin.Context, s server) (int, []byte, error) {
 	}
 
 	if err != nil {
-		return http.StatusInternalServerError, nil, err
+		return http.StatusInternalServerError, "", err
 	}
 
-	return http.StatusOK, nil, nil
+	return http.StatusOK, "", nil
 }
 
 // updateMetricRequest структура запроса обновления метрик.

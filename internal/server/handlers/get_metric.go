@@ -12,10 +12,10 @@ import (
 )
 
 // GetMetricHandler реализация хендлера для получения метрик.
-func GetMetricHandler(ctx *gin.Context, s server) (int, []byte, error) {
+func GetMetricHandler(ctx *gin.Context, s server) (int, string, error) {
 	req, err := parseGetMetricRequest(ctx)
 	if err != nil {
-		return http.StatusBadRequest, nil, err
+		return http.StatusBadRequest, "", err
 	}
 
 	metricsRepo := s.GetMetricsRepo()
@@ -27,34 +27,34 @@ func GetMetricHandler(ctx *gin.Context, s server) (int, []byte, error) {
 		return getCounterMetricHandler(metricsRepo, req.metricName)
 	default:
 		// Попасть сюда невозможно, из-за валидации запроса.
-		return http.StatusInternalServerError, nil, fmt.Errorf("unknown metric type")
+		return http.StatusInternalServerError, "", fmt.Errorf("unknown metric type")
 	}
 }
 
-func getGaugeMetricHandler(repo *metrics.MetricsRepository, name string) (int, []byte, error) {
+func getGaugeMetricHandler(repo *metrics.MetricsRepository, name string) (int, string, error) {
 	value, err := repo.GetGaugeMetric(name)
 	if err != nil {
 		if err == models.ErrNotFound {
-			return http.StatusNotFound, nil, err
+			return http.StatusNotFound, "", err
 		}
 
-		return http.StatusInternalServerError, nil, err
+		return http.StatusInternalServerError, "", err
 	}
 
-	return http.StatusOK, []byte(floatToStr(value)), nil
+	return http.StatusOK, floatToStr(value), nil
 }
 
-func getCounterMetricHandler(repo *metrics.MetricsRepository, name string) (int, []byte, error) {
+func getCounterMetricHandler(repo *metrics.MetricsRepository, name string) (int, string, error) {
 	value, err := repo.GetCounterMetric(name)
 	if err != nil {
 		if err == models.ErrNotFound {
-			return http.StatusNotFound, nil, err
+			return http.StatusNotFound, "", err
 		}
 
-		return http.StatusInternalServerError, nil, err
+		return http.StatusInternalServerError, "", err
 	}
 
-	return http.StatusOK, []byte(intToStr(value)), nil
+	return http.StatusOK, intToStr(value), nil
 }
 
 func floatToStr(v float64) string {

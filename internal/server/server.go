@@ -14,6 +14,10 @@ import (
 	"github.com/xantinium/metrix/internal/server/handlers"
 )
 
+func init() {
+	gin.SetMode(gin.ReleaseMode)
+}
+
 // internalMetrixServer внутренняя структура сервера.
 // Является реализацией интерфейса сервера, получаемого хендлерами.
 type internalMetrixServer struct {

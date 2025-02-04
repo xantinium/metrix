@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +25,7 @@ type server interface {
 }
 
 // httpHandler общий тип для всех хендлеров.
-type httpHandler = func(*gin.Context, server) (int, []byte, error)
+type httpHandler = func(*gin.Context, server) (int, string, error)
 
 // RegisterHandler добавляет хендлер handler в качестве обработчика
 // паттерна pattern для метода method.
@@ -34,14 +33,10 @@ func RegisterHandler(server server, method httpMethod, pattern string, handler h
 	server.GetInternalRouter().Handle(method, pattern, func(ctx *gin.Context) {
 		statusCode, response, err := handler(ctx, server)
 		if err != nil {
-			ctx.JSON(statusCode, createErrResp(err))
+			ctx.String(statusCode, err.Error())
 			return
 		}
 
-		ctx.JSON(statusCode, response)
+		ctx.String(statusCode, response)
 	})
-}
-
-func createErrResp(err error) []byte {
-	return []byte(fmt.Sprintf("{\"err\":\"%s\"}", err))
 }
