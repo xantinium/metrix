@@ -2,9 +2,9 @@
 package agent
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/xantinium/metrix/internal/infrastructure/runtimemetrics"
 	"github.com/xantinium/metrix/internal/models"
@@ -67,22 +67,15 @@ func (agent *MetrixAgent) UpdateMetrics() {
 
 // getHandlerUrl создаёт URL-адрес для запроса на обновление метрик.
 func (agent MetrixAgent) getUpdateMetricHandlerURL(metric models.MetricInfo) string {
-	b := strings.Builder{}
+	metricTypeStr := string(metric.Type())
 
-	b.WriteString("http://")
-	b.WriteString(agent.serverAddr)
-	b.WriteString("/update/")
-	b.WriteString(string(metric.Type()))
-	b.WriteString("/")
-	b.WriteString(metric.Name())
-	b.WriteString("/")
-
+	var metricValueStr string
 	switch metric.Type() {
 	case models.Gauge:
-		b.WriteString(tools.FloatToStr(metric.GaugeValue()))
+		metricValueStr = tools.FloatToStr(metric.GaugeValue())
 	case models.Counter:
-		b.WriteString(tools.IntToStr(metric.CounterValue()))
+		metricValueStr = tools.IntToStr(metric.CounterValue())
 	}
 
-	return b.String()
+	return fmt.Sprintf("http://%s/update/%s/%s/%s", agent.serverAddr, metricTypeStr, metric.Name(), metricValueStr)
 }
