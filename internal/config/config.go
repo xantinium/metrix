@@ -6,8 +6,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"strconv"
+	"os"
 	"strings"
+
+	"github.com/xantinium/metrix/internal/tools"
 )
 
 // ServerArgs структура, описывающая аргументы сервера.
@@ -22,8 +24,23 @@ func ParseServerArgs() ServerArgs {
 
 	flag.Parse()
 
-	return ServerArgs{
+	args := ServerArgs{
 		Addr: address.String(),
+	}
+
+	envArgs := parseServerArgsFromEnv()
+
+	if envArgs.Addr != "" {
+		args.Addr = envArgs.Addr
+	}
+
+	return args
+}
+
+// parseServerArgsFromEnv парсит переменные окружения в ServerArgs.
+func parseServerArgsFromEnv() ServerArgs {
+	return ServerArgs{
+		Addr: os.Getenv("ADDRESS"),
 	}
 }
 
@@ -43,11 +60,49 @@ func ParseAgentArgs() AgentArgs {
 
 	flag.Parse()
 
-	return AgentArgs{
+	args := AgentArgs{
 		Addr:           address.String(),
 		PollInterval:   *pollInterval,
 		ReportInterval: *reportInterval,
 	}
+
+	envArgs := parseAgentArgsFromEnv()
+
+	if envArgs.Addr != "" {
+		args.Addr = envArgs.Addr
+	}
+	if envArgs.PollInterval != 0 {
+		args.PollInterval = envArgs.PollInterval
+	}
+	if envArgs.ReportInterval != 0 {
+		args.ReportInterval = envArgs.ReportInterval
+	}
+
+	return args
+}
+
+// parseAgentArgsFromEnv парсит переменные окружения в AgentArgs.
+func parseAgentArgsFromEnv() AgentArgs {
+	var err error
+
+	args := AgentArgs{
+		Addr: os.Getenv("ADDRESS"),
+	}
+
+	pollIntervalStr := os.Getenv("POLL_INTERVAL")
+	reportIntervalStr := os.Getenv("REPORT_INTERVAL")
+
+	args.PollInterval, err = tools.StrToInt(pollIntervalStr)
+	if err != nil {
+		args.PollInterval = 0
+	}
+
+	args.ReportInterval, err = tools.StrToInt(reportIntervalStr)
+	if err != nil {
+		args.ReportInterval = 0
+	}
+
+	return args
 }
 
 // NetAddress кастомная структура для обработки флага -a.
@@ -75,7 +130,7 @@ func (a *NetAddress) Set(s string) error {
 
 	host := hp[0]
 
-	port, err := strconv.Atoi(hp[1])
+	port, err := tools.StrToInt(hp[1])
 	if err != nil {
 		return err
 	}

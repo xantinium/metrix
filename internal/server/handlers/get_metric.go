@@ -3,16 +3,17 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/xantinium/metrix/internal/models"
 	"github.com/xantinium/metrix/internal/repository/metrics"
+	"github.com/xantinium/metrix/internal/server/interfaces"
+	"github.com/xantinium/metrix/internal/tools"
 )
 
 // GetMetricHandler реализация хендлера для получения метрик.
-func GetMetricHandler(ctx *gin.Context, s server) (int, string, error) {
+func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, error) {
 	req, err := parseGetMetricRequest(ctx)
 	if err != nil {
 		return http.StatusBadRequest, "", err
@@ -41,7 +42,7 @@ func getGaugeMetricHandler(repo *metrics.MetricsRepository, name string) (int, s
 		return http.StatusInternalServerError, "", err
 	}
 
-	return http.StatusOK, floatToStr(value), nil
+	return http.StatusOK, tools.FloatToStr(value), nil
 }
 
 func getCounterMetricHandler(repo *metrics.MetricsRepository, name string) (int, string, error) {
@@ -54,15 +55,7 @@ func getCounterMetricHandler(repo *metrics.MetricsRepository, name string) (int,
 		return http.StatusInternalServerError, "", err
 	}
 
-	return http.StatusOK, intToStr(value), nil
-}
-
-func floatToStr(v float64) string {
-	return strconv.FormatFloat(v, 'f', -1, 64)
-}
-
-func intToStr(v int64) string {
-	return strconv.FormatInt(v, 10)
+	return http.StatusOK, tools.IntToStr(value), nil
 }
 
 // getMetricRequest структура запроса обновления метрик.

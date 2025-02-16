@@ -6,31 +6,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xantinium/metrix/internal/repository/metrics"
+
+	"github.com/xantinium/metrix/internal/server/interfaces"
 )
-
-// httpMethod тип HTTP-метода.
-type httpMethod = string
-
-const (
-	// HTTP-метод "GET"
-	MethodGet httpMethod = http.MethodGet
-	// HTTP-метод "POST"
-	MethodPost httpMethod = http.MethodPost
-)
-
-// server интерфейс сервера, доступного в хендлерах.
-type server interface {
-	GetInternalRouter() *gin.Engine
-	GetMetricsRepo() *metrics.MetricsRepository
-}
 
 // httpHandler общий тип для всех хендлеров.
-type httpHandler = func(*gin.Context, server) (int, string, error)
+type httpHandler = func(*gin.Context, interfaces.Server) (int, string, error)
 
 // RegisterHandler добавляет хендлер handler в качестве обработчика
 // паттерна pattern для метода method.
-func RegisterHandler(server server, method httpMethod, pattern string, handler httpHandler) {
+func RegisterHandler(server interfaces.Server, method string, pattern string, handler httpHandler) {
 	server.GetInternalRouter().Handle(method, pattern, func(ctx *gin.Context) {
 		statusCode, response, err := handler(ctx, server)
 		if err != nil {
@@ -46,8 +31,8 @@ const baseTemplate = "<html><head><title>Metrix</title></head><body>%s</body></h
 
 // RegisterHTMLHandler добавляет хендлер handler в качестве обработчика
 // паттерна pattern. Ожидается, что хендлер вернёт валидную HTML-строку.
-func RegisterHTMLHandler(server server, pattern string, handler httpHandler) {
-	server.GetInternalRouter().Handle(MethodGet, pattern, func(ctx *gin.Context) {
+func RegisterHTMLHandler(server interfaces.Server, pattern string, handler httpHandler) {
+	server.GetInternalRouter().Handle(http.MethodGet, pattern, func(ctx *gin.Context) {
 		ctx.Writer.Header().Set("Content-Type", "text/html")
 
 		statusCode, response, err := handler(ctx, server)
