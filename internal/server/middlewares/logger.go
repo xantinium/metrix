@@ -1,11 +1,9 @@
 package middlewares
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap/zapcore"
 
 	"github.com/xantinium/metrix/internal/logger"
 )
@@ -18,18 +16,29 @@ func LoggerMiddleware() gin.HandlerFunc {
 		ctx.Next()
 
 		duration := time.Since(start)
-		msg := fmt.Sprintf("%d %s %s", ctx.Writer.Status(), ctx.Request.Method, ctx.Request.URL.RawPath)
+		msg := "api request"
 
 		logger.Info(
 			msg,
-			zapcore.Field{
-				Key:       "duration",
-				Type:      zapcore.DurationType,
-				Interface: duration,
+			logger.Field{
+				Name:  "status",
+				Value: ctx.Writer.Status(),
 			},
-			zapcore.Field{
-				Key:     "size",
-				Integer: int64(ctx.Writer.Size()),
+			logger.Field{
+				Name:  "method",
+				Value: ctx.Request.Method,
+			},
+			logger.Field{
+				Name:  "url",
+				Value: ctx.Request.URL.RawPath,
+			},
+			logger.Field{
+				Name:  "duration",
+				Value: duration,
+			},
+			logger.Field{
+				Name:  "size",
+				Value: ctx.Writer.Size(),
 			},
 		)
 	}
