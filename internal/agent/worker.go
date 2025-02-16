@@ -1,8 +1,9 @@
 package agent
 
 import (
-	"log"
 	"time"
+
+	"github.com/xantinium/metrix/internal/logger"
 )
 
 type uploadFuncT = func()
@@ -26,6 +27,17 @@ type metrixAgentWorker struct {
 	uploadFunc     uploadFuncT
 }
 
+// Log логирует события воркера.
+func (worker *metrixAgentWorker) Log(msg string) {
+	logger.Info(
+		msg,
+		logger.Field{
+			Name:  "entity",
+			Value: "worker",
+		},
+	)
+}
+
 // Run запускает воркер.
 func (worker *metrixAgentWorker) Run() {
 	t := time.NewTicker(worker.reportInterval)
@@ -34,7 +46,7 @@ func (worker *metrixAgentWorker) Run() {
 		for {
 			select {
 			case <-worker.stopChan:
-				log.Printf("[worker]: stopping...")
+				worker.Log("stopping...")
 				t.Stop()
 				return
 			case <-t.C:

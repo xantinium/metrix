@@ -3,10 +3,10 @@ package agent
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/xantinium/metrix/internal/infrastructure/runtimemetrics"
+	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/models"
 	"github.com/xantinium/metrix/internal/tools"
 )
@@ -56,7 +56,7 @@ func (agent *MetrixAgent) UpdateMetrics() {
 	for _, metric := range metrics {
 		resp, err := http.Post(agent.getUpdateMetricHandlerURL(metric), "text/plain", nil)
 		if err != nil {
-			log.Printf("failed to update metric: %v", err)
+			logger.Errorf("failed to update metric: %v", err)
 		}
 
 		if resp != nil {
