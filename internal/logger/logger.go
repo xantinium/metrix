@@ -37,14 +37,24 @@ type Field struct {
 	Value interface{}
 }
 
-// Info пишет лог уровня INFO.
+// Info пишет структурированный лог уровня INFO.
 func Info(msg string, fields ...Field) {
 	log(infoLevel, msg, fields...)
 }
 
-// Error пишет лог уровня ERROR.
+// Infof пишет форматированный лог уровня INFO.
+func Infof(format string, args ...interface{}) {
+	logger.Infof(format, args)
+}
+
+// Error пишет структурированный лог уровня ERROR.
 func Error(msg string, fields ...Field) {
 	log(errorLevel, msg, fields...)
+}
+
+// Errorf пишет форматированный лог уровня ERROR.
+func Errorf(format string, args ...interface{}) {
+	logger.Errorf(format, args)
 }
 
 type logLevel = uint8

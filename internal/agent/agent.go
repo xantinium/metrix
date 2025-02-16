@@ -56,7 +56,7 @@ func (agent *MetrixAgent) UpdateMetrics() {
 	for _, metric := range metrics {
 		resp, err := http.Post(agent.getUpdateMetricHandlerURL(metric), "text/plain", nil)
 		if err != nil {
-			logger.Error(fmt.Sprintf("failed to update metric: %v", err))
+			logger.Errorf("failed to update metric: %v", err)
 		}
 
 		if resp != nil {
