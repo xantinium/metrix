@@ -22,7 +22,6 @@ type ServerArgs struct {
 func ParseServerArgs() ServerArgs {
 	address := new(NetAddress)
 	flag.Var(address, "a", "address of metrix server in form <host:port>")
-
 	isDev := flag.Bool("dev", false, "is metrix server running in development mode")
 
 	flag.Parse()
@@ -53,6 +52,7 @@ type AgentArgs struct {
 	Addr           string
 	PollInterval   int
 	ReportInterval int
+	IsDev          bool
 }
 
 // ParseAgentArgs парсит агрументы командной строки в AgentArgs.
@@ -61,6 +61,7 @@ func ParseAgentArgs() AgentArgs {
 	flag.Var(address, "a", "address of metrix server in form <host:port>")
 	pollInterval := flag.Int("p", 2, "poll interval (in sec)")
 	reportInterval := flag.Int("r", 2, "report interval (in sec)")
+	isDev := flag.Bool("dev", false, "is metrix agent running in development mode")
 
 	flag.Parse()
 
@@ -68,6 +69,7 @@ func ParseAgentArgs() AgentArgs {
 		Addr:           address.String(),
 		PollInterval:   *pollInterval,
 		ReportInterval: *reportInterval,
+		IsDev:          *isDev,
 	}
 
 	envArgs := parseAgentArgsFromEnv()
