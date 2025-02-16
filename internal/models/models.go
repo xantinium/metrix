@@ -1,7 +1,14 @@
 // Пакет models содержит описание объектов бизнес-логики.
 package models
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
+)
 
 // MetricType тип метрики.
 type MetricType string

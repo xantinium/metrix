@@ -2,7 +2,11 @@
 // На данный момент, все данные хранятся в оперативной памяти.
 package memstorage
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/xantinium/metrix/internal/models"
+)
 
 // NewMemStorage создаёт новое хранилище метрик.
 func NewMemStorage() *MemStorage {
@@ -24,7 +28,12 @@ func (storage *MemStorage) GetGaugeMetric(name string) (float64, error) {
 	storage.mx.RLock()
 	defer storage.mx.RUnlock()
 
-	return storage.gaugeMetrics[name], nil
+	value, exists := storage.gaugeMetrics[name]
+	if !exists {
+		return 0, models.ErrNotFound
+	}
+
+	return value, nil
 }
 
 // GetCounterMetric возвращает метрику типа COUNTER по имени name.
@@ -32,7 +41,29 @@ func (storage *MemStorage) GetCounterMetric(name string) (int64, error) {
 	storage.mx.RLock()
 	defer storage.mx.RUnlock()
 
-	return storage.counterMetrics[name], nil
+	value, exists := storage.counterMetrics[name]
+	if !exists {
+		return 0, models.ErrNotFound
+	}
+
+	return value, nil
+}
+
+// GetAllMetrics возвращает все существующие метрики.
+func (storage *MemStorage) GetAllMetrics() ([]models.MetricInfo, error) {
+	storage.mx.RLock()
+	defer storage.mx.RUnlock()
+
+	metrics := make([]models.MetricInfo, len(storage.gaugeMetrics)+len(storage.counterMetrics))
+
+	for name, value := range storage.gaugeMetrics {
+		metrics = append(metrics, models.NewGaugeMetric(name, value))
+	}
+	for name, value := range storage.counterMetrics {
+		metrics = append(metrics, models.NewCounterMetric(name, value))
+	}
+
+	return metrics, nil
 }
 
 // UpdateGaugeMetric обновляет текущее значение метрики типа GAUGE

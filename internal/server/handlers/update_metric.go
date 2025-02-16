@@ -5,14 +5,16 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/xantinium/metrix/internal/models"
 )
 
-// UpdateMetric реализация хендлера для обновления метрик.
-func UpdateMetric(s server, r *http.Request) (int, []byte, error) {
-	req, err := parseUpdateMetricRequest(r)
+// UpdateMetricHandler реализация хендлера для обновления метрик.
+func UpdateMetricHandler(ctx *gin.Context, s server) (int, string, error) {
+	req, err := parseUpdateMetricRequest(ctx)
 	if err != nil {
-		return http.StatusBadRequest, nil, err
+		return http.StatusBadRequest, "", err
 	}
 
 	metricsRepo := s.GetMetricsRepo()
@@ -25,10 +27,10 @@ func UpdateMetric(s server, r *http.Request) (int, []byte, error) {
 	}
 
 	if err != nil {
-		return http.StatusInternalServerError, nil, err
+		return http.StatusInternalServerError, "", err
 	}
 
-	return http.StatusOK, nil, nil
+	return http.StatusOK, "", nil
 }
 
 // updateMetricRequest структура запроса обновления метрик.
@@ -39,7 +41,7 @@ type updateMetricRequest struct {
 }
 
 // parseUpdateMetricRequest парсит сырой HTTP-запрос в структуру запроса.
-func parseUpdateMetricRequest(r *http.Request) (updateMetricRequest, error) {
+func parseUpdateMetricRequest(r *gin.Context) (updateMetricRequest, error) {
 	var (
 		err                                           error
 		maybeMetricType, metricName, maybeMetricValue string
@@ -47,7 +49,7 @@ func parseUpdateMetricRequest(r *http.Request) (updateMetricRequest, error) {
 		metricValue                                   float64
 	)
 
-	maybeMetricType = r.PathValue("type")
+	maybeMetricType = r.Param("type")
 	if maybeMetricType == "" {
 		return updateMetricRequest{}, fmt.Errorf("metric type is missing")
 	}
@@ -57,12 +59,12 @@ func parseUpdateMetricRequest(r *http.Request) (updateMetricRequest, error) {
 		return updateMetricRequest{}, err
 	}
 
-	metricName = r.PathValue("name")
+	metricName = r.Param("name")
 	if metricName == "" {
 		return updateMetricRequest{}, fmt.Errorf("metric name is missing")
 	}
 
-	maybeMetricValue = r.PathValue("value")
+	maybeMetricValue = r.Param("value")
 	if maybeMetricValue == "" {
 		return updateMetricRequest{}, fmt.Errorf("metric value is missing")
 	}

@@ -2,8 +2,10 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/xantinium/metrix/internal/repository/metrics"
 )
 
@@ -19,30 +21,41 @@ const (
 
 // server интерфейс сервера, доступного в хендлерах.
 type server interface {
-	GetInternalMux() *http.ServeMux
+	GetInternalRouter() *gin.Engine
 	GetMetricsRepo() *metrics.MetricsRepository
 }
 
 // httpHandler общий тип для всех хендлеров.
-type httpHandler = func(server, *http.Request) (int, []byte, error)
+type httpHandler = func(*gin.Context, server) (int, string, error)
 
 // RegisterHandler добавляет хендлер handler в качестве обработчика
 // паттерна pattern для метода method.
 func RegisterHandler(server server, method httpMethod, pattern string, handler httpHandler) {
-	server.GetInternalMux().HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != method {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		statusCode, response, err := handler(server, r)
+	server.GetInternalRouter().Handle(method, pattern, func(ctx *gin.Context) {
+		statusCode, response, err := handler(ctx, server)
 		if err != nil {
-			w.WriteHeader(statusCode)
-			w.Write([]byte(err.Error()))
+			ctx.String(statusCode, err.Error())
 			return
 		}
 
-		w.WriteHeader(statusCode)
-		w.Write(response)
+		ctx.String(statusCode, response)
+	})
+}
+
+const baseTemplate = "<html><head><title>Metrix</title></head><body>%s</body></html>"
+
+// RegisterHTMLHandler добавляет хендлер handler в качестве обработчика
+// паттерна pattern. Ожидается, что хендлер вернёт валидную HTML-строку.
+func RegisterHTMLHandler(server server, pattern string, handler httpHandler) {
+	server.GetInternalRouter().Handle(MethodGet, pattern, func(ctx *gin.Context) {
+		ctx.Writer.Header().Set("Content-Type", "text/html")
+
+		statusCode, response, err := handler(ctx, server)
+		if err != nil {
+			ctx.String(http.StatusOK, baseTemplate, fmt.Sprintf("status: %d, err: %s", statusCode, err.Error()))
+			return
+		}
+
+		ctx.String(http.StatusOK, baseTemplate, response)
 	})
 }
