@@ -7,11 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/xantinium/metrix/internal/models"
+	"github.com/xantinium/metrix/internal/server/interfaces"
 	"github.com/xantinium/metrix/internal/tools"
 )
 
 // UpdateMetricHandler реализация хендлера для обновления метрик.
-func UpdateMetricHandler(ctx *gin.Context, s server) (int, string, error) {
+func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, error) {
 	req, err := parseUpdateMetricRequest(ctx)
 	if err != nil {
 		return http.StatusBadRequest, "", err

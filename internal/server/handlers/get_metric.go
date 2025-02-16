@@ -8,11 +8,12 @@ import (
 
 	"github.com/xantinium/metrix/internal/models"
 	"github.com/xantinium/metrix/internal/repository/metrics"
+	"github.com/xantinium/metrix/internal/server/interfaces"
 	"github.com/xantinium/metrix/internal/tools"
 )
 
 // GetMetricHandler реализация хендлера для получения метрик.
-func GetMetricHandler(ctx *gin.Context, s server) (int, string, error) {
+func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, error) {
 	req, err := parseGetMetricRequest(ctx)
 	if err != nil {
 		return http.StatusBadRequest, "", err
