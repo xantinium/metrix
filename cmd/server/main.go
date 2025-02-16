@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -26,7 +25,7 @@ func main() {
 		select {
 		case err = <-server.Run():
 			if err != nil {
-				log.Fatal(fmt.Errorf("failed to run metrix server: %v", err))
+				logger.Error(fmt.Sprintf("failed to run metrix server: %v", err))
 				return
 			}
 
@@ -34,7 +33,7 @@ func main() {
 		case <-waitForStopSignal():
 			err = server.Stop()
 			if err != nil {
-				log.Println(fmt.Errorf("failed to gracefully stop metrix server: %v", err))
+				logger.Error(fmt.Sprintf("failed to gracefully stop metrix server: %v", err))
 			}
 
 			return
