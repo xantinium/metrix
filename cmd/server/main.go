@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/xantinium/metrix/internal/config"
+	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/server"
 )
 
@@ -15,6 +16,9 @@ func main() {
 	var err error
 
 	args := config.ParseServerArgs()
+
+	logger.Init(args.IsDev)
+	defer logger.Destroy()
 
 	server := server.NewMetrixServer(args.Addr)
 

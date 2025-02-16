@@ -14,7 +14,8 @@ import (
 
 // ServerArgs структура, описывающая аргументы сервера.
 type ServerArgs struct {
-	Addr string
+	Addr  string
+	IsDev bool
 }
 
 // ParseServerArgs парсит агрументы командной строки в ServerArgs.
@@ -22,10 +23,13 @@ func ParseServerArgs() ServerArgs {
 	address := new(NetAddress)
 	flag.Var(address, "a", "address of metrix server in form <host:port>")
 
+	isDev := flag.Bool("dev", false, "is metrix server running in development mode")
+
 	flag.Parse()
 
 	args := ServerArgs{
-		Addr: address.String(),
+		Addr:  address.String(),
+		IsDev: *isDev,
 	}
 
 	envArgs := parseServerArgsFromEnv()
