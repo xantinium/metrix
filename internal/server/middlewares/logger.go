@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"io"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -18,28 +19,37 @@ func LoggerMiddleware() gin.HandlerFunc {
 		duration := time.Since(start)
 		msg := "api request"
 
-		logger.Info(
-			msg,
-			logger.Field{
+		fields := []logger.Field{
+			{
 				Name:  "status",
 				Value: ctx.Writer.Status(),
 			},
-			logger.Field{
+			{
 				Name:  "method",
 				Value: ctx.Request.Method,
 			},
-			logger.Field{
+			{
 				Name:  "url",
 				Value: ctx.Request.URL.RawPath,
 			},
-			logger.Field{
+			{
 				Name:  "duration",
 				Value: duration,
 			},
-			logger.Field{
+			{
 				Name:  "size",
 				Value: ctx.Writer.Size(),
 			},
-		)
+		}
+
+		reqBody, err := io.ReadAll(ctx.Copy().Request.Body)
+		if err == nil {
+			fields = append(fields, logger.Field{
+				Name:  "req",
+				Value: string(reqBody),
+			})
+		}
+
+		logger.Info(msg, fields...)
 	}
 }
