@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/mailru/easyjson"
+
 	"github.com/xantinium/metrix/internal/infrastructure/runtimemetrics"
 	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/models"
@@ -59,41 +60,57 @@ func (agent *MetrixAgent) UpdateMetrics() {
 	metrics := agent.metricsSource.GetSnapshot()
 
 	for _, metric := range metrics {
-		var (
-			err      error
-			reqBytes []byte
-			resp     *http.Response
-		)
-
 		if agent.usingV2 {
-			value := metric.GaugeValue()
-			delta := metric.CounterValue()
-
-			req := Metrics{
-				ID:    metric.Name(),
-				MType: string(metric.Type()),
-				Delta: &delta,
-				Value: &value,
-			}
-
-			reqBytes, err = easyjson.Marshal(req)
-			if err != nil {
-				logger.Errorf("failed to update metric: %v", err)
-			}
-
-			reqBody := bytes.NewBuffer(reqBytes)
-			resp, err = http.Post(agent.getUpdateMetricV2HandlerURL(), "application/json", reqBody)
+			agent.updateMetricsV2(metric)
 		} else {
-			resp, err = http.Post(agent.getUpdateMetricHandlerURL(metric), "text/plain", nil)
+			agent.updateMetrics(metric)
 		}
+	}
+}
 
-		if err != nil {
-			logger.Errorf("failed to update metric: %v", err)
-		}
+func (agent *MetrixAgent) updateMetrics(metric models.MetricInfo) {
+	resp, err := http.Post(agent.getUpdateMetricHandlerURL(metric), "text/plain", nil)
 
-		if resp != nil {
-			resp.Body.Close()
-		}
+	if err != nil {
+		logger.Errorf("failed to update metric: %v", err)
+	}
+
+	if resp != nil {
+		resp.Body.Close()
+	}
+}
+
+func (agent *MetrixAgent) updateMetricsV2(metric models.MetricInfo) {
+	var (
+		err      error
+		reqBytes []byte
+		resp     *http.Response
+	)
+
+	value := metric.GaugeValue()
+	delta := metric.CounterValue()
+
+	req := Metrics{
+		ID:    metric.Name(),
+		MType: string(metric.Type()),
+		Delta: &delta,
+		Value: &value,
+	}
+
+	reqBytes, err = easyjson.Marshal(req)
+	if err != nil {
+		logger.Errorf("failed to update metric: %v", err)
+	}
+
+	reqBody := bytes.NewBuffer(reqBytes)
+	resp, err = http.Post(agent.getUpdateMetricV2HandlerURL(), "application/json", reqBody)
+
+	if err != nil {
+		logger.Errorf("failed to update metric: %v", err)
+	}
+
+	if resp != nil {
+		resp.Body.Close()
 	}
 }
 
