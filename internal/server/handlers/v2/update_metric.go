@@ -1,7 +1,6 @@
 package v2handlers
 
 import (
-	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,25 +13,12 @@ import (
 // UpdateMetricHandler реализация хендлера для обновления метрик.
 func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.Marshaler, error) {
 	var (
-		err          error
-		bodyBytes    []byte
-		req          Metrics
-		metricType   models.MetricType
-		gaugeValue   float64
-		counterValue int64
+		err        error
+		req        Metrics
+		metricType models.MetricType
 	)
 
-	bodyBytes, err = io.ReadAll(ctx.Request.Body)
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
-	}
-
-	err = easyjson.Unmarshal(bodyBytes, &req)
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
-	}
-
-	metricType, err = req.ParseType()
+	metric, err := ParseMetricInfo(ctx)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}
@@ -41,19 +27,9 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 
 	switch metricType {
 	case models.Gauge:
-		gaugeValue, err = req.ParseGaugeValue()
-		if err != nil {
-			return http.StatusBadRequest, nil, err
-		}
-
-		*req.Value, err = metricsRepo.UpdateGaugeMetric(req.ID, gaugeValue)
+		*req.Value, err = metricsRepo.UpdateGaugeMetric(req.ID, metric.GaugeValue())
 	case models.Counter:
-		counterValue, err = req.ParseCounterValue()
-		if err != nil {
-			return http.StatusBadRequest, nil, err
-		}
-
-		*req.Delta, err = metricsRepo.UpdateCounterMetric(req.ID, counterValue)
+		*req.Delta, err = metricsRepo.UpdateCounterMetric(req.ID, metric.CounterValue())
 	}
 
 	if err != nil {

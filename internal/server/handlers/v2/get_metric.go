@@ -15,35 +15,18 @@ import (
 
 // GetMetricHandler реализация хендлера для получения метрик.
 func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.Marshaler, error) {
-	var (
-		err        error
-		bodyBytes  []byte
-		req        Metrics
-		metricType models.MetricType
-	)
-
-	bodyBytes, err = io.ReadAll(ctx.Request.Body)
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
-	}
-
-	err = easyjson.Unmarshal(bodyBytes, &req)
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
-	}
-
-	metricType, err = req.ParseType()
+	metric, err := ParseMetricInfo(ctx)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}
 
 	metricsRepo := s.GetMetricsRepo()
 
-	switch metricType {
+	switch metric.Type() {
 	case models.Gauge:
-		return getGaugeMetricHandler(metricsRepo, req.ID)
+		return getGaugeMetricHandler(metricsRepo, metric.Name())
 	case models.Counter:
-		return getCounterMetricHandler(metricsRepo, req.ID)
+		return getCounterMetricHandler(metricsRepo, metric.Name())
 	default:
 		// Попасть сюда невозможно, из-за валидации запроса.
 		return http.StatusInternalServerError, nil, fmt.Errorf("unknown metric type")
@@ -84,6 +67,48 @@ func getCounterMetricHandler(repo *metrics.MetricsRepository, name string) (int,
 	}, nil
 }
 
+func ParseMetricInfo(ctx *gin.Context) (models.MetricInfo, error) {
+	var (
+		err        error
+		bodyBytes  []byte
+		req        Metrics
+		metricType models.MetricType
+	)
+
+	bodyBytes, err = io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		return models.MetricInfo{}, err
+	}
+
+	err = easyjson.Unmarshal(bodyBytes, &req)
+	if err != nil {
+		return models.MetricInfo{}, err
+	}
+
+	metricType, err = parseType(req.MType)
+	if err != nil {
+		return models.MetricInfo{}, err
+	}
+
+	if metricType == models.Gauge {
+		if req.Value == nil {
+			return models.MetricInfo{}, fmt.Errorf("value is missing")
+		}
+
+		return models.NewGaugeMetric(req.ID, *req.Value), nil
+	}
+
+	if metricType == models.Counter {
+		if req.Delta == nil {
+			return models.MetricInfo{}, fmt.Errorf("value is missing")
+		}
+
+		return models.NewCounterMetric(req.ID, *req.Delta), nil
+	}
+
+	return models.MetricInfo{}, fmt.Errorf("invalid request")
+}
+
 //easyjson:json
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
@@ -92,32 +117,14 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-// ParseType парсит тип метрики.
-func (req Metrics) ParseType() (models.MetricType, error) {
-	switch req.MType {
+// parseType парсит тип метрики.
+func parseType(maybeMetricType string) (models.MetricType, error) {
+	switch maybeMetricType {
 	case string(models.Gauge):
 		return models.Gauge, nil
 	case string(models.Counter):
 		return models.Counter, nil
 	default:
-		return "", fmt.Errorf("unknown metric type")
+		return "", fmt.Errorf("unknown metric type: %q", maybeMetricType)
 	}
-}
-
-// ParseGaugeValue парсит значение для метрики типа Gauge.
-func (req Metrics) ParseGaugeValue() (float64, error) {
-	if req.Value == nil {
-		return 0, fmt.Errorf("value is missing")
-	}
-
-	return *req.Value, nil
-}
-
-// ParseGaugeValue парсит значение для метрики типа Counter.
-func (req Metrics) ParseCounterValue() (int64, error) {
-	if req.Delta == nil {
-		return 0, fmt.Errorf("value is missing")
-	}
-
-	return *req.Delta, nil
 }
