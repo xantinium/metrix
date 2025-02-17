@@ -46,19 +46,19 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 			return http.StatusBadRequest, nil, err
 		}
 
-		err = metricsRepo.UpdateGaugeMetric(req.ID, gaugeValue)
+		*req.Value, err = metricsRepo.UpdateGaugeMetric(req.ID, gaugeValue)
 	case models.Counter:
 		counterValue, err = req.ParseCounterValue()
 		if err != nil {
 			return http.StatusBadRequest, nil, err
 		}
 
-		err = metricsRepo.UpdateCounterMetric(req.ID, counterValue)
+		*req.Delta, err = metricsRepo.UpdateCounterMetric(req.ID, counterValue)
 	}
 
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusOK, nil, nil
+	return http.StatusOK, req, nil
 }
