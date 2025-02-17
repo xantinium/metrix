@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"bytes"
 	"io"
 	"time"
 
@@ -12,9 +13,19 @@ import (
 // LoggerMiddleware мидлварь для логирования запросов.
 func LoggerMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reqCopy := ctx.Request.Clone(ctx)
-		start := time.Now()
+		var (
+			err       error
+			bodyBytes []byte
+		)
 
+		if ctx.Request.Body != nil {
+			bodyBytes, err = io.ReadAll(ctx.Request.Body)
+			if err == nil {
+				ctx.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+			}
+		}
+
+		start := time.Now()
 		ctx.Next()
 
 		duration := time.Since(start)
@@ -43,11 +54,10 @@ func LoggerMiddleware() gin.HandlerFunc {
 			},
 		}
 
-		reqBody, err := io.ReadAll(reqCopy.Body)
 		if err == nil {
 			fields = append(fields, logger.Field{
 				Name:  "req",
-				Value: string(reqBody),
+				Value: string(bodyBytes),
 			})
 		}
 
