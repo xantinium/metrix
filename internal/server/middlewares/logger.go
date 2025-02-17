@@ -12,6 +12,7 @@ import (
 // LoggerMiddleware мидлварь для логирования запросов.
 func LoggerMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		reqCopy := ctx.Request.Clone(ctx)
 		start := time.Now()
 
 		ctx.Next()
@@ -42,7 +43,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 			},
 		}
 
-		reqBody, err := io.ReadAll(ctx.Copy().Request.Body)
+		reqBody, err := io.ReadAll(reqCopy.Body)
 		if err == nil {
 			fields = append(fields, logger.Field{
 				Name:  "req",
