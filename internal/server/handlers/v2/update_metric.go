@@ -1,7 +1,6 @@
 package v2handlers
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 
@@ -17,7 +16,7 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 	var (
 		err          error
 		bodyBytes    []byte
-		req          updateMetricsRequest
+		req          Metrics
 		metricType   models.MetricType
 		gaugeValue   float64
 		counterValue int64
@@ -62,42 +61,4 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 	}
 
 	return http.StatusOK, nil, nil
-}
-
-//easyjson:json
-type updateMetricsRequest struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
-}
-
-// ParseType парсит тип метрики.
-func (req updateMetricsRequest) ParseType() (models.MetricType, error) {
-	switch req.MType {
-	case string(models.Gauge):
-		return models.Gauge, nil
-	case string(models.Counter):
-		return models.Counter, nil
-	default:
-		return "", fmt.Errorf("unknown metric type")
-	}
-}
-
-// ParseGaugeValue парсит значение для метрики типа Gauge.
-func (req updateMetricsRequest) ParseGaugeValue() (float64, error) {
-	if req.Value == nil {
-		return 0, fmt.Errorf("value is missing")
-	}
-
-	return *req.Value, nil
-}
-
-// ParseGaugeValue парсит значение для метрики типа Counter.
-func (req updateMetricsRequest) ParseCounterValue() (int64, error) {
-	if req.Delta == nil {
-		return 0, fmt.Errorf("value is missing")
-	}
-
-	return *req.Delta, nil
 }
