@@ -65,15 +65,20 @@ func RegisterV2Handler(server interfaces.Server, method string, pattern string, 
 
 		statusCode, response, err = handler(ctx, server)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+			writeJSON(ctx, statusCode, []byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
 			return
 		}
 
 		responseBytes, err = easyjson.Marshal(response)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+			writeJSON(ctx, http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
 		}
 
-		ctx.JSON(statusCode, responseBytes)
+		writeJSON(ctx, statusCode, responseBytes)
 	})
+}
+
+func writeJSON(ctx *gin.Context, statusCode int, json []byte) {
+	ctx.Header("Content-Type", "application/json; charset=utf-8")
+	ctx.String(statusCode, string(json))
 }

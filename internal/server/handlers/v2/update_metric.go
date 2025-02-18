@@ -13,9 +13,8 @@ import (
 // UpdateMetricHandler реализация хендлера для обновления метрик.
 func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.Marshaler, error) {
 	var (
-		err        error
-		req        Metrics
-		metricType models.MetricType
+		updatedGaugeValue   float64
+		updatedCounterValue int64
 	)
 
 	metric, err := ParseMetricInfo(ctx)
@@ -23,18 +22,25 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 		return http.StatusBadRequest, nil, err
 	}
 
+	resp := Metrics{
+		ID:    metric.Name(),
+		MType: string(metric.Type()),
+	}
+
 	metricsRepo := s.GetMetricsRepo()
 
-	switch metricType {
+	switch metric.Type() {
 	case models.Gauge:
-		*req.Value, err = metricsRepo.UpdateGaugeMetric(req.ID, metric.GaugeValue())
+		updatedGaugeValue, err = metricsRepo.UpdateGaugeMetric(metric.Name(), metric.GaugeValue())
+		resp.Value = &updatedGaugeValue
 	case models.Counter:
-		*req.Delta, err = metricsRepo.UpdateCounterMetric(req.ID, metric.CounterValue())
+		updatedCounterValue, err = metricsRepo.UpdateCounterMetric(metric.Name(), metric.CounterValue())
+		resp.Delta = &updatedCounterValue
 	}
 
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusOK, req, nil
+	return http.StatusOK, resp, nil
 }

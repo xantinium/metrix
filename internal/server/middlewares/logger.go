@@ -42,7 +42,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 			},
 			{
 				Name:  "url",
-				Value: ctx.Request.URL.RawPath,
+				Value: ctx.Request.URL.String(),
 			},
 			{
 				Name:  "duration",
