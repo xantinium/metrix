@@ -11,6 +11,8 @@ import (
 	"github.com/xantinium/metrix/internal/infrastructure/memstorage"
 	"github.com/xantinium/metrix/internal/repository/metrics"
 	"github.com/xantinium/metrix/internal/server/handlers"
+	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
+	"github.com/xantinium/metrix/internal/server/middlewares"
 )
 
 func init() {
@@ -39,7 +41,7 @@ func NewMetrixServer(addr string) *MetrixServer {
 	metricsStorage := memstorage.NewMemStorage()
 
 	router := gin.New()
-	router.Use(gin.Recovery())
+	router.Use(gin.Recovery(), middlewares.LoggerMiddleware())
 
 	internalServer := &internalMetrixServer{
 		router:      router,
@@ -49,6 +51,8 @@ func NewMetrixServer(addr string) *MetrixServer {
 	handlers.RegisterHTMLHandler(internalServer, "/", handlers.GetAllMetricHandler)
 	handlers.RegisterHandler(internalServer, http.MethodGet, "/value/:type/:name", handlers.GetMetricHandler)
 	handlers.RegisterHandler(internalServer, http.MethodPost, "/update/:type/:name/:value", handlers.UpdateMetricHandler)
+	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/value", v2handlers.GetMetricHandler)
+	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/update", v2handlers.UpdateMetricHandler)
 
 	return &MetrixServer{
 		server: &http.Server{

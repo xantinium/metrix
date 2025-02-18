@@ -68,22 +68,22 @@ func (storage *MemStorage) GetAllMetrics() ([]models.MetricInfo, error) {
 
 // UpdateGaugeMetric обновляет текущее значение метрики типа GAUGE
 // с именем name, перезаписывая его значением value.
-func (storage *MemStorage) UpdateGaugeMetric(name string, value float64) error {
+func (storage *MemStorage) UpdateGaugeMetric(name string, value float64) (float64, error) {
 	storage.mx.Lock()
 	defer storage.mx.Unlock()
 
 	storage.gaugeMetrics[name] = value
 
-	return nil
+	return storage.gaugeMetrics[name], nil
 }
 
 // UpdateCounterMetric обновляет текущее значение метрики типа COUNTER
 // с именем name, добавляя к нему значение value.
-func (storage *MemStorage) UpdateCounterMetric(name string, value int64) error {
+func (storage *MemStorage) UpdateCounterMetric(name string, value int64) (int64, error) {
 	storage.mx.Lock()
 	defer storage.mx.Unlock()
 
 	storage.counterMetrics[name] += value
 
-	return nil
+	return storage.counterMetrics[name], nil
 }
