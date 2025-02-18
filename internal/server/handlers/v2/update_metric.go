@@ -1,6 +1,8 @@
 package v2handlers
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,24 +19,24 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 		updatedCounterValue int64
 	)
 
-	metric, err := ParseMetricInfo(ctx)
+	req, err := ParseUpdateMetricRequest(ctx)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}
 
 	resp := Metrics{
-		ID:    metric.Name(),
-		MType: string(metric.Type()),
+		ID:    req.MetricName,
+		MType: string(req.MetricType),
 	}
 
 	metricsRepo := s.GetMetricsRepo()
 
-	switch metric.Type() {
+	switch req.MetricType {
 	case models.Gauge:
-		updatedGaugeValue, err = metricsRepo.UpdateGaugeMetric(metric.Name(), metric.GaugeValue())
+		updatedGaugeValue, err = metricsRepo.UpdateGaugeMetric(req.MetricName, req.GaugeValue)
 		resp.Value = &updatedGaugeValue
 	case models.Counter:
-		updatedCounterValue, err = metricsRepo.UpdateCounterMetric(metric.Name(), metric.CounterValue())
+		updatedCounterValue, err = metricsRepo.UpdateCounterMetric(req.MetricName, req.CounterValue)
 		resp.Delta = &updatedCounterValue
 	}
 
@@ -43,4 +45,58 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 	}
 
 	return http.StatusOK, resp, nil
+}
+
+type UpdateMetricRequest struct {
+	MetricName   string
+	MetricType   models.MetricType
+	GaugeValue   float64
+	CounterValue int64
+}
+
+func ParseUpdateMetricRequest(ctx *gin.Context) (UpdateMetricRequest, error) {
+	var (
+		err       error
+		bodyBytes []byte
+		rawReq    Metrics
+		req       UpdateMetricRequest
+	)
+
+	bodyBytes, err = io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		return UpdateMetricRequest{}, err
+	}
+
+	err = easyjson.Unmarshal(bodyBytes, &rawReq)
+	if err != nil {
+		return UpdateMetricRequest{}, err
+	}
+
+	req.MetricName = rawReq.ID
+	if req.MetricName == "" {
+		return UpdateMetricRequest{}, fmt.Errorf("metric id cannot be empty")
+	}
+
+	req.MetricType, err = parseType(rawReq.MType)
+	if err != nil {
+		return UpdateMetricRequest{}, err
+	}
+
+	if req.MetricType == models.Gauge {
+		if rawReq.Value == nil {
+			return UpdateMetricRequest{}, fmt.Errorf("value is missing")
+		} else {
+			req.GaugeValue = *rawReq.Value
+		}
+	}
+
+	if req.MetricType == models.Counter {
+		if rawReq.Delta == nil {
+			return UpdateMetricRequest{}, fmt.Errorf("value is missing")
+		} else {
+			req.CounterValue = *rawReq.Delta
+		}
+	}
+
+	return req, nil
 }

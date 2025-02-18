@@ -8,33 +8,35 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-
 	"github.com/xantinium/metrix/internal/models"
 	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
 )
 
-func Test_ParseMetricInfo(t *testing.T) {
+func TestParseGetMetricRequest(t *testing.T) {
 	tests := []struct {
 		name    string
 		reqBody string
-		want    models.MetricInfo
+		want    v2handlers.GetMetricsRequest
 		wantErr bool
 	}{
 		{
-			name:    "Валидный json c типом Gauge",
-			reqBody: `{"id":"Alloc","type":"gauge","value":10.5}`,
-			want:    models.NewGaugeMetric("Alloc", 10.5),
-			wantErr: false,
+			name:    "Валидный json для типа Gauge",
+			reqBody: `{"id":"Alloc","type":"gauge"}`,
+			want:    v2handlers.GetMetricsRequest{MetricName: "Alloc", MetricType: models.Gauge},
 		},
 		{
-			name:    "Валидный json c типом Counter",
-			reqBody: `{"id":"Counter","type":"counter","delta":8}`,
-			want:    models.NewCounterMetric("Counter", 8),
-			wantErr: false,
+			name:    "Валидный json для типа Counter",
+			reqBody: `{"id":"PollCount","type":"counter"}`,
+			want:    v2handlers.GetMetricsRequest{MetricName: "PollCount", MetricType: models.Counter},
 		},
 		{
-			name:    "Невалидный json",
-			reqBody: `{"id":"Counter"}`,
+			name:    "Невалидный json: пустой id",
+			reqBody: `{"id":""}`,
+			wantErr: true,
+		},
+		{
+			name:    "Невалидный json: пустой type",
+			reqBody: `{"id":"Alloc","type":""}`,
 			wantErr: true,
 		},
 	}
@@ -46,13 +48,13 @@ func Test_ParseMetricInfo(t *testing.T) {
 				},
 			}
 
-			got, err := v2handlers.ParseMetricInfo(ctx)
+			got, err := v2handlers.ParseGetMetricRequest(ctx)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseMetricInfo() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParseGetMetricRequest() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParseMetricInfo() = %v, want %v", got, tt.want)
+				t.Errorf("ParseGetMetricRequest() = %v, want %v", got, tt.want)
 			}
 		})
 	}
