@@ -8,28 +8,19 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xantinium/metrix/internal/logger"
 )
 
 // CompressMiddleware мидлварь для сжатия данных.
 func CompressMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if isGZIPSupported(ctx) && isSupportedContentType(ctx) {
-			logger.Info("WRITE", logger.Field{
-				Name:  "headers",
-				Value: ctx.Request.Header,
-			})
-			// Меняем оригинальный gin.ResponseWriter на новый новым с поддержкой сжатия.
-			cw := newCompressWriter(ctx.Writer)
-			ctx.Writer = cw
-			defer cw.Close()
-		}
+		// if isGZIPSupported(ctx) && isSupportedContentType(ctx) {
+		// 	// Меняем оригинальный gin.ResponseWriter на новый с поддержкой сжатия.
+		// 	cw := newCompressWriter(ctx.Writer)
+		// 	ctx.Writer = cw
+		// 	defer cw.Close()
+		// }
 
 		if isRequestCompressed(ctx) {
-			logger.Info("READ", logger.Field{
-				Name:  "headers",
-				Value: ctx.Request.Header,
-			})
 			// Оборачиваем тело запроса в io.Reader с поддержкой декомпрессии.
 			cr, err := newCompressReader(ctx.Request.Body)
 			if err != nil {
