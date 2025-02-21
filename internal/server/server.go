@@ -41,7 +41,7 @@ func NewMetrixServer(addr string) *MetrixServer {
 	metricsStorage := memstorage.NewMemStorage()
 
 	router := gin.New()
-	router.Use(gin.Recovery(), middlewares.LoggerMiddleware())
+	router.Use(gin.Recovery(), middlewares.CompressMiddleware(), middlewares.LoggerMiddleware())
 
 	internalServer := &internalMetrixServer{
 		router:      router,
