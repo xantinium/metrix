@@ -13,7 +13,7 @@ import (
 // CompressMiddleware мидлварь для сжатия данных.
 func CompressMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if isGZIPSupported(ctx) && isSupportedContentType(ctx) {
+		if isGZIPSupported(ctx) && isSupportedMIMEType(ctx) {
 			// Меняем оригинальный gin.ResponseWriter на новый с поддержкой сжатия.
 			cw := newCompressWriter(ctx.Writer)
 			ctx.Writer = cw
@@ -37,9 +37,10 @@ func CompressMiddleware() gin.HandlerFunc {
 }
 
 const (
+	acceptHeader          = "Accept"
 	acceptEncodingHeader  = "Accept-Encoding"
-	contentEncodingHeader = "Content-Encoding"
 	contentTypeHeader     = "Content-Type"
+	contentEncodingHeader = "Content-Encoding"
 )
 
 // isGZIPSupported проверяет поддержку клиентом сжатия в формате gzip.
@@ -56,18 +57,36 @@ func isRequestCompressed(ctx *gin.Context) bool {
 	return h != "" && strings.Contains(h, "gzip")
 }
 
-// isSupportedContentType проверяет заголовок Content-Type,
-// т.к. не все типы подлежат сжатию.
-func isSupportedContentType(ctx *gin.Context) bool {
-	h := ctx.GetHeader(contentTypeHeader)
-	if h == "" {
+var supportedMIMETypes = []string{
+	"application/json",
+	"text/html",
+}
+
+// isSupportedMIMEType проверяет заголовоки Accept
+// и Content-Type, т.к. не все типы подлежат сжатию.
+func isSupportedMIMEType(ctx *gin.Context) bool {
+	supported := slices.ContainsFunc(ctx.Request.Header.Values(acceptHeader), func(acceptType string) bool {
+		for _, mimeType := range supportedMIMETypes {
+			if strings.Contains(acceptType, mimeType) {
+				return true
+			}
+		}
+
+		return false
+	})
+	if supported {
 		return true
 	}
 
-	return slices.Contains([]string{
-		"application/json",
-		"text/html",
-	}, strings.TrimSpace(h))
+	return slices.ContainsFunc(ctx.Request.Header.Values(contentTypeHeader), func(contentTypeType string) bool {
+		for _, mimeType := range supportedMIMETypes {
+			if strings.Contains(contentTypeType, mimeType) {
+				return true
+			}
+		}
+
+		return false
+	})
 }
 
 // compressWriter реализует интерфейс gin.ResponseWriter.
