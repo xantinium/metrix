@@ -49,9 +49,9 @@ func TestMetricsRepository_UpdateGaugeMetric(t *testing.T) {
 
 		switch oper.metricType {
 		case models.Gauge:
-			err = repo.UpdateGaugeMetric(oper.metricName, oper.metricValue)
+			_, err = repo.UpdateGaugeMetric(oper.metricName, oper.metricValue)
 		case models.Counter:
-			err = repo.UpdateCounterMetric(oper.metricName, int64(oper.metricValue))
+			_, err = repo.UpdateCounterMetric(oper.metricName, int64(oper.metricValue))
 		}
 
 		require.NoError(t, err)
