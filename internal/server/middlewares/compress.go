@@ -25,12 +25,11 @@ func CompressMiddleware() gin.HandlerFunc {
 			cr, err := newCompressReader(ctx.Request.Body)
 			if err != nil {
 				ctx.Writer.WriteHeader(http.StatusInternalServerError)
-				return
+			} else {
+				// Меняем тело запроса на новое.
+				ctx.Request.Body = cr
+				defer cr.Close()
 			}
-
-			// Меняем тело запроса на новое.
-			ctx.Request.Body = cr
-			defer cr.Close()
 		}
 
 		ctx.Next()
@@ -62,7 +61,7 @@ func isRequestCompressed(ctx *gin.Context) bool {
 func isSupportedContentType(ctx *gin.Context) bool {
 	h := ctx.GetHeader(contentTypeHeader)
 	if h == "" {
-		return false
+		return true
 	}
 
 	return slices.Contains([]string{
