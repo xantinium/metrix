@@ -13,12 +13,12 @@ import (
 // CompressMiddleware мидлварь для сжатия данных.
 func CompressMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// if isGZIPSupported(ctx) && isSupportedContentType(ctx) {
-		// 	// Меняем оригинальный gin.ResponseWriter на новый с поддержкой сжатия.
-		// 	cw := newCompressWriter(ctx.Writer)
-		// 	ctx.Writer = cw
-		// 	defer cw.Close()
-		// }
+		if isGZIPSupported(ctx) && isSupportedContentType(ctx) {
+			// Меняем оригинальный gin.ResponseWriter на новый с поддержкой сжатия.
+			cw := newCompressWriter(ctx.Writer)
+			ctx.Writer = cw
+			defer cw.Close()
+		}
 
 		if isRequestCompressed(ctx) {
 			// Оборачиваем тело запроса в io.Reader с поддержкой декомпрессии.
