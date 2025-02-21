@@ -100,13 +100,20 @@ func (agent *MetrixAgent) updateMetricsV2(metric models.MetricInfo) {
 	reqBytes, err = easyjson.Marshal(req)
 	if err != nil {
 		logger.Errorf("failed to update metric: %v", err)
+		return
+	}
+
+	reqBytes, err = tools.Compress(reqBytes)
+	if err != nil {
+		logger.Errorf("failed to update metric: %v", err)
+		return
 	}
 
 	reqBody := bytes.NewBuffer(reqBytes)
 	resp, err = http.Post(agent.getUpdateMetricV2HandlerURL(), "application/json", reqBody)
-
 	if err != nil {
 		logger.Errorf("failed to update metric: %v", err)
+		return
 	}
 
 	if resp != nil {
