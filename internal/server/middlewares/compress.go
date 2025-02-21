@@ -15,15 +15,9 @@ import (
 func CompressMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if isGZIPSupported(ctx) && isSupportedContentType(ctx) {
-			logger.Info("WRITE: %s", logger.Field{
-				Name:  acceptEncodingHeader,
-				Value: ctx.GetHeader(acceptEncodingHeader),
-			}, logger.Field{
-				Name:  contentEncodingHeader,
-				Value: ctx.GetHeader(contentEncodingHeader),
-			}, logger.Field{
-				Name:  contentTypeHeader,
-				Value: ctx.GetHeader(contentTypeHeader),
+			logger.Info("WRITE", logger.Field{
+				Name:  "headers",
+				Value: ctx.Request.Header,
 			})
 			// Меняем оригинальный gin.ResponseWriter на новый новым с поддержкой сжатия.
 			cw := newCompressWriter(ctx.Writer)
@@ -32,15 +26,9 @@ func CompressMiddleware() gin.HandlerFunc {
 		}
 
 		if isRequestCompressed(ctx) {
-			logger.Info("READ: %s", logger.Field{
-				Name:  acceptEncodingHeader,
-				Value: ctx.GetHeader(acceptEncodingHeader),
-			}, logger.Field{
-				Name:  contentEncodingHeader,
-				Value: ctx.GetHeader(contentEncodingHeader),
-			}, logger.Field{
-				Name:  contentTypeHeader,
-				Value: ctx.GetHeader(contentTypeHeader),
+			logger.Info("READ", logger.Field{
+				Name:  "headers",
+				Value: ctx.Request.Header,
 			})
 			// Оборачиваем тело запроса в io.Reader с поддержкой декомпрессии.
 			cr, err := newCompressReader(ctx.Request.Body)
