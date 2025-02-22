@@ -4,6 +4,7 @@
 package metricsstorage
 
 import (
+	"errors"
 	"os"
 	"sync"
 
@@ -46,6 +47,16 @@ type MetricsStorage struct {
 }
 
 func (storage *MetricsStorage) restore(path string) error {
+	_, err := os.Stat(path)
+	if err != nil {
+		// Если файл не существует, то просто выходим.
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+
+		return err
+	}
+
 	rawMetrics, err := os.ReadFile(path)
 	if err != nil {
 		return err
