@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/mailru/easyjson"
 
@@ -18,7 +19,7 @@ import (
 type MetrixAgentOptions struct {
 	ServerAddr     string
 	PollInterval   int
-	ReportInterval int
+	ReportInterval time.Duration
 	UsingV2        bool
 }
 

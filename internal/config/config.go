@@ -6,16 +6,19 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"os"
 	"strings"
+	"time"
 
 	"github.com/xantinium/metrix/internal/tools"
 )
 
 // ServerArgs структура, описывающая аргументы сервера.
 type ServerArgs struct {
-	Addr  string
-	IsDev bool
+	Addr           string
+	IsDev          bool
+	StoreInterval  time.Duration
+	StoragePath    string
+	RestoreStorage bool
 }
 
 // ParseServerArgs парсит агрументы командной строки в ServerArgs.
@@ -23,27 +26,54 @@ func ParseServerArgs() ServerArgs {
 	address := new(NetAddress)
 	flag.Var(address, "a", "address of metrix server in form <host:port>")
 	isDev := flag.Bool("dev", false, "is metrix server running in development mode")
+	storeInterval := flag.Int("i", 300, "interval (in seconds) of writing metrics into file")
+	storagePath := flag.String("f", "./metrix.db", "path to file for metrics writing")
+	restoreStorage := flag.Bool("r", true, "read metrics from file on start")
 
 	flag.Parse()
 
 	args := ServerArgs{
-		Addr:  address.String(),
-		IsDev: *isDev,
+		Addr:           address.String(),
+		IsDev:          *isDev,
+		StoragePath:    *storagePath,
+		RestoreStorage: *restoreStorage,
+	}
+	if storeInterval != nil {
+		args.StoreInterval = time.Duration(*storeInterval) * time.Second
 	}
 
 	envArgs := parseServerArgsFromEnv()
 
-	if envArgs.Addr != "" {
-		args.Addr = envArgs.Addr
+	if envArgs.Addr.Exists {
+		args.Addr = envArgs.Addr.Value
+	}
+	if envArgs.StoreInterval.Exists {
+		args.StoreInterval = time.Duration(envArgs.StoreInterval.Value) * time.Second
+	}
+	if envArgs.StoragePath.Exists {
+		args.StoragePath = envArgs.StoragePath.Value
+	}
+	if envArgs.RestoreStorage.Exists {
+		args.RestoreStorage = envArgs.RestoreStorage.Value
 	}
 
 	return args
 }
 
-// parseServerArgsFromEnv парсит переменные окружения в ServerArgs.
-func parseServerArgsFromEnv() ServerArgs {
-	return ServerArgs{
-		Addr: os.Getenv("ADDRESS"),
+type serverEnvArgs struct {
+	Addr           tools.StrEnvVar
+	StoreInterval  tools.IntEnvVar
+	StoragePath    tools.StrEnvVar
+	RestoreStorage tools.BoolEnvVar
+}
+
+// parseServerArgsFromEnv парсит переменные окружения в serverEnvArgs.
+func parseServerArgsFromEnv() serverEnvArgs {
+	return serverEnvArgs{
+		Addr:           tools.GetStrFromEnv("ADDRESS"),
+		StoreInterval:  tools.GetIntFromEnv("STORE_INTERVAL"),
+		StoragePath:    tools.GetStrFromEnv("FILE_STORAGE_PATH"),
+		RestoreStorage: tools.GetBoolFromEnv("RESTORE"),
 	}
 }
 
@@ -51,7 +81,7 @@ func parseServerArgsFromEnv() ServerArgs {
 type AgentArgs struct {
 	Addr           string
 	PollInterval   int
-	ReportInterval int
+	ReportInterval time.Duration
 	IsDev          bool
 }
 
@@ -66,49 +96,42 @@ func ParseAgentArgs() AgentArgs {
 	flag.Parse()
 
 	args := AgentArgs{
-		Addr:           address.String(),
-		PollInterval:   *pollInterval,
-		ReportInterval: *reportInterval,
-		IsDev:          *isDev,
+		Addr:         address.String(),
+		PollInterval: *pollInterval,
+		IsDev:        *isDev,
+	}
+	if reportInterval != nil {
+		args.ReportInterval = time.Duration(*reportInterval) * time.Second
 	}
 
 	envArgs := parseAgentArgsFromEnv()
 
-	if envArgs.Addr != "" {
-		args.Addr = envArgs.Addr
+	if envArgs.Addr.Exists {
+		args.Addr = envArgs.Addr.Value
 	}
-	if envArgs.PollInterval != 0 {
-		args.PollInterval = envArgs.PollInterval
+	if envArgs.PollInterval.Exists {
+		args.PollInterval = envArgs.PollInterval.Value
 	}
-	if envArgs.ReportInterval != 0 {
-		args.ReportInterval = envArgs.ReportInterval
+	if envArgs.ReportInterval.Exists {
+		args.ReportInterval = time.Duration(envArgs.ReportInterval.Value) * time.Second
 	}
 
 	return args
 }
 
-// parseAgentArgsFromEnv парсит переменные окружения в AgentArgs.
-func parseAgentArgsFromEnv() AgentArgs {
-	var err error
+type agentEnvArgs struct {
+	Addr           tools.StrEnvVar
+	PollInterval   tools.IntEnvVar
+	ReportInterval tools.IntEnvVar
+}
 
-	args := AgentArgs{
-		Addr: os.Getenv("ADDRESS"),
+// parseAgentArgsFromEnv парсит переменные окружения в agentEnvArgs.
+func parseAgentArgsFromEnv() agentEnvArgs {
+	return agentEnvArgs{
+		Addr:           tools.GetStrFromEnv("ADDRESS"),
+		PollInterval:   tools.GetIntFromEnv("POLL_INTERVAL"),
+		ReportInterval: tools.GetIntFromEnv("REPORT_INTERVAL"),
 	}
-
-	pollIntervalStr := os.Getenv("POLL_INTERVAL")
-	reportIntervalStr := os.Getenv("REPORT_INTERVAL")
-
-	args.PollInterval, err = tools.StrToInt(pollIntervalStr)
-	if err != nil {
-		args.PollInterval = 0
-	}
-
-	args.ReportInterval, err = tools.StrToInt(reportIntervalStr)
-	if err != nil {
-		args.ReportInterval = 0
-	}
-
-	return args
 }
 
 // NetAddress кастомная структура для обработки флага -a.

@@ -18,7 +18,12 @@ func main() {
 	logger.Init(args.IsDev)
 	defer logger.Destroy()
 
-	server := server.NewMetrixServer(args.Addr)
+	server := server.NewMetrixServer(server.MetrixServerOptions{
+		Addr:           args.Addr,
+		StoragePath:    args.StoragePath,
+		StoreInterval:  args.StoreInterval,
+		RestoreMetrics: args.RestoreStorage,
+	})
 
 	for {
 		select {
