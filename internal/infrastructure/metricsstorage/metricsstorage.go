@@ -19,6 +19,7 @@ func NewMetricsStorage(path string, restore bool) (*MetricsStorage, error) {
 	var err error
 
 	storage := &MetricsStorage{
+		fileW:          &fileWriter{path: path},
 		gaugeMetrics:   make(map[string]float64),
 		counterMetrics: make(map[string]int64),
 	}
@@ -30,18 +31,13 @@ func NewMetricsStorage(path string, restore bool) (*MetricsStorage, error) {
 		}
 	}
 
-	storage.file, err = os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		return nil, err
-	}
-
 	return storage, nil
 }
 
 // MetricsStorage структура, реализующая хранилище метрик.
 type MetricsStorage struct {
 	mx             sync.RWMutex
-	file           *os.File
+	fileW          *fileWriter
 	gaugeMetrics   map[string]float64
 	counterMetrics map[string]int64
 }
@@ -87,8 +83,8 @@ func (storage *MetricsStorage) restore(path string) error {
 func (storage *MetricsStorage) Destroy() {
 	err := storage.SaveMetrics()
 	if err != nil {
-		logger.Error("failed to save metrics")
+		logger.Errorf("failed to save metrics: %v", err)
 	}
 
-	storage.file.Close()
+	storage.fileW.Wait()
 }

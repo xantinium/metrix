@@ -1,6 +1,9 @@
 package metricsstorage
 
 import (
+	"os"
+	"sync"
+
 	"github.com/mailru/easyjson"
 	"github.com/xantinium/metrix/internal/models"
 )
@@ -45,9 +48,33 @@ func (storage *MetricsStorage) SaveMetrics() error {
 		return err
 	}
 
-	storage.mx.Lock()
-	defer storage.mx.Unlock()
+	return storage.fileW.Write(bytes)
+}
 
-	_, err = storage.file.WriteAt(bytes, 0)
+type fileWriter struct {
+	mx   sync.Mutex
+	wg   sync.WaitGroup
+	path string
+}
+
+func (w *fileWriter) Write(data []byte) error {
+	w.wg.Add(1)
+	w.mx.Lock()
+	defer func() {
+		w.mx.Unlock()
+		w.wg.Done()
+	}()
+
+	file, err := os.OpenFile(w.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.Write(data)
 	return err
+}
+
+func (w *fileWriter) Wait() {
+	w.wg.Wait()
 }
