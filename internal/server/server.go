@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xantinium/metrix/internal/infrastructure/memstorage"
+	"github.com/xantinium/metrix/internal/infrastructure/metricsstorage"
 	"github.com/xantinium/metrix/internal/repository/metrics"
 	"github.com/xantinium/metrix/internal/server/handlers"
+	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
+	"github.com/xantinium/metrix/internal/server/middlewares"
 )
 
 func init() {
@@ -34,12 +36,22 @@ func (server *internalMetrixServer) GetMetricsRepo() *metrics.MetricsRepository 
 	return server.metricsRepo
 }
 
+type MetrixServerOptions struct {
+	Addr           string
+	StoragePath    string
+	StoreInterval  time.Duration
+	RestoreMetrics bool
+}
+
 // NewMetrixServer создаёт новый сервер метрик.
-func NewMetrixServer(addr string) *MetrixServer {
-	metricsStorage := memstorage.NewMemStorage()
+func NewMetrixServer(opts MetrixServerOptions) *MetrixServer {
+	metricsStorage, err := metricsstorage.NewMetricsStorage(opts.StoragePath, opts.RestoreMetrics)
+	if err != nil {
+		panic(err)
+	}
 
 	router := gin.New()
-	router.Use(gin.Recovery())
+	router.Use(gin.Recovery(), middlewares.CompressMiddleware(), middlewares.LoggerMiddleware())
 
 	internalServer := &internalMetrixServer{
 		router:      router,
@@ -49,13 +61,17 @@ func NewMetrixServer(addr string) *MetrixServer {
 	handlers.RegisterHTMLHandler(internalServer, "/", handlers.GetAllMetricHandler)
 	handlers.RegisterHandler(internalServer, http.MethodGet, "/value/:type/:name", handlers.GetMetricHandler)
 	handlers.RegisterHandler(internalServer, http.MethodPost, "/update/:type/:name/:value", handlers.UpdateMetricHandler)
+	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/value", v2handlers.GetMetricHandler)
+	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/update", v2handlers.UpdateMetricHandler)
 
 	return &MetrixServer{
 		server: &http.Server{
-			Addr:    addr,
+			Addr:    opts.Addr,
 			Handler: router,
 		},
 		internalServer: internalServer,
+		metricsStorage: metricsStorage,
+		worker:         newMetrixServerWorker(opts.StoreInterval, metricsStorage),
 	}
 }
 
@@ -63,6 +79,8 @@ func NewMetrixServer(addr string) *MetrixServer {
 type MetrixServer struct {
 	server         *http.Server
 	internalServer *internalMetrixServer
+	metricsStorage *metricsstorage.MetricsStorage
+	worker         *metrixServerWorker
 }
 
 // Run запускает сервер метрик.
@@ -79,11 +97,18 @@ func (s *MetrixServer) Run() chan error {
 		errChan <- nil
 	}()
 
+	s.worker.Run()
+
 	return errChan
 }
 
 // Stop останавливает сервер метрик.
 func (s *MetrixServer) Stop() error {
+	defer func() {
+		s.worker.Stop()
+		s.metricsStorage.Destroy()
+	}()
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 

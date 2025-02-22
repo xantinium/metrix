@@ -3,13 +3,13 @@
 package runtimemetrics
 
 import (
-	"log"
 	"math"
 	"math/rand/v2"
 	"runtime"
 	"sync"
 	"time"
 
+	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/models"
 )
 
@@ -32,6 +32,17 @@ type RuntimeMetricsSource struct {
 	metricsSnapshot []models.MetricInfo
 }
 
+// Log логирует события источника метрик.
+func (source *RuntimeMetricsSource) Log(msg string) {
+	logger.Info(
+		msg,
+		logger.Field{
+			Name:  "entity",
+			Value: "runtimemetrics",
+		},
+	)
+}
+
 // Run запускает обновления метрик.
 func (source *RuntimeMetricsSource) Run() {
 	t := time.NewTicker(source.pollInterval)
@@ -40,7 +51,7 @@ func (source *RuntimeMetricsSource) Run() {
 		for {
 			select {
 			case <-source.stopChan:
-				log.Printf("[runtimemetrics]: stopping...")
+				source.Log("stopping...")
 				t.Stop()
 				return
 			case <-t.C:
@@ -57,7 +68,7 @@ func (source *RuntimeMetricsSource) Stop() {
 
 // DoShapshot сканирует метрики и сохраняет их в памяти.
 func (source *RuntimeMetricsSource) DoShapshot() {
-	log.Printf("[runtimemetrics]: saving metrics snapshot...")
+	source.Log("saving metrics snapshot...")
 
 	stats := new(runtime.MemStats)
 	runtime.ReadMemStats(stats)
