@@ -45,6 +45,9 @@ func (storage *MetricsStorage) SaveMetrics() error {
 		return err
 	}
 
-	_, err = storage.file.Write(bytes)
+	storage.mx.Lock()
+	defer storage.mx.Unlock()
+
+	_, err = storage.file.WriteAt(bytes, 0)
 	return err
 }
