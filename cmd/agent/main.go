@@ -7,10 +7,14 @@ import (
 
 	"github.com/xantinium/metrix/internal/agent"
 	"github.com/xantinium/metrix/internal/config"
+	"github.com/xantinium/metrix/internal/logger"
 )
 
 func main() {
 	args := config.ParseAgentArgs()
+
+	logger.Init(args.IsDev)
+	defer logger.Destroy()
 
 	agent := agent.NewMetrixAgent(agent.MetrixAgentOptions{
 		ServerAddr:     args.Addr,

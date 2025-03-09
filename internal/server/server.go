@@ -11,6 +11,7 @@ import (
 	"github.com/xantinium/metrix/internal/infrastructure/memstorage"
 	"github.com/xantinium/metrix/internal/repository/metrics"
 	"github.com/xantinium/metrix/internal/server/handlers"
+	"github.com/xantinium/metrix/internal/server/middlewares"
 )
 
 func init() {
@@ -39,7 +40,7 @@ func NewMetrixServer(addr string) *MetrixServer {
 	metricsStorage := memstorage.NewMemStorage()
 
 	router := gin.New()
-	router.Use(gin.Recovery())
+	router.Use(gin.Recovery(), middlewares.LoggerMiddleware())
 
 	internalServer := &internalMetrixServer{
 		router:      router,
