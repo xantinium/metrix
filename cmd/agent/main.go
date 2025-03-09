@@ -20,6 +20,7 @@ func main() {
 		ServerAddr:     args.Addr,
 		PollInterval:   args.PollInterval,
 		ReportInterval: args.ReportInterval,
+		UsingV2:        true,
 	})
 
 	agent.Run()
