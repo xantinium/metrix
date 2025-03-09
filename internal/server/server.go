@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xantinium/metrix/internal/infrastructure/metricsstorage"
 	"github.com/xantinium/metrix/internal/repository/metrics"
 	"github.com/xantinium/metrix/internal/server/handlers"
 	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
@@ -37,25 +36,19 @@ func (server *internalMetrixServer) GetMetricsRepo() *metrics.MetricsRepository 
 }
 
 type MetrixServerOptions struct {
-	Addr           string
-	StoragePath    string
-	StoreInterval  time.Duration
-	RestoreMetrics bool
+	Addr          string
+	StoreInterval time.Duration
+	Storage       metrics.MetricsStorage
 }
 
 // NewMetrixServer создаёт новый сервер метрик.
 func NewMetrixServer(opts MetrixServerOptions) *MetrixServer {
-	metricsStorage, err := metricsstorage.NewMetricsStorage(opts.StoragePath, opts.RestoreMetrics)
-	if err != nil {
-		panic(err)
-	}
-
 	router := gin.New()
 	router.Use(gin.Recovery(), middlewares.CompressMiddleware(), middlewares.LoggerMiddleware())
 
 	internalServer := &internalMetrixServer{
 		router:      router,
-		metricsRepo: metrics.NewMetricsRepository(metricsStorage),
+		metricsRepo: metrics.NewMetricsRepository(opts.Storage, opts.StoreInterval == 0),
 	}
 
 	handlers.RegisterHTMLHandler(internalServer, "/", handlers.GetAllMetricHandler)
@@ -70,8 +63,7 @@ func NewMetrixServer(opts MetrixServerOptions) *MetrixServer {
 			Handler: router,
 		},
 		internalServer: internalServer,
-		metricsStorage: metricsStorage,
-		worker:         newMetrixServerWorker(opts.StoreInterval, metricsStorage),
+		worker:         newMetrixServerWorker(opts.StoreInterval, opts.Storage),
 	}
 }
 
@@ -79,7 +71,6 @@ func NewMetrixServer(opts MetrixServerOptions) *MetrixServer {
 type MetrixServer struct {
 	server         *http.Server
 	internalServer *internalMetrixServer
-	metricsStorage *metricsstorage.MetricsStorage
 	worker         *metrixServerWorker
 }
 
@@ -106,7 +97,6 @@ func (s *MetrixServer) Run() chan error {
 func (s *MetrixServer) Stop() error {
 	defer func() {
 		s.worker.Stop()
-		s.metricsStorage.Destroy()
 	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)

@@ -6,23 +6,32 @@ import (
 	"syscall"
 
 	"github.com/xantinium/metrix/internal/config"
+	"github.com/xantinium/metrix/internal/infrastructure/metricsstorage"
 	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/server"
 )
 
 func main() {
-	var err error
+	var (
+		err     error
+		storage *metricsstorage.MetricsStorage
+	)
 
 	args := config.ParseServerArgs()
 
 	logger.Init(args.IsDev)
 	defer logger.Destroy()
 
+	storage, err = metricsstorage.NewMetricsStorage(args.StoragePath, args.RestoreStorage)
+	if err != nil {
+		panic(err)
+	}
+	defer storage.Destroy()
+
 	server := server.NewMetrixServer(server.MetrixServerOptions{
-		Addr:           args.Addr,
-		StoragePath:    args.StoragePath,
-		StoreInterval:  args.StoreInterval,
-		RestoreMetrics: args.RestoreStorage,
+		Addr:          args.Addr,
+		StoreInterval: args.StoreInterval,
+		Storage:       storage,
 	})
 
 	for {

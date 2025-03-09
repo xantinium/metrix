@@ -4,17 +4,24 @@ package metrics
 import (
 	"fmt"
 
+	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/models"
 )
 
 // NewMetricsRepository создаёт новый репозиторий метрик.
-func NewMetricsRepository(storage MetricsStorage) *MetricsRepository {
-	return &MetricsRepository{storage: storage}
+//
+// syncMetrics - нужно ли сохранять метрики после каждой мутации.
+func NewMetricsRepository(storage MetricsStorage, syncMetrics bool) *MetricsRepository {
+	return &MetricsRepository{
+		storage:     storage,
+		syncMetrics: syncMetrics,
+	}
 }
 
 // MetricsRepository структура, описывающая репозиторий метрик.
 type MetricsRepository struct {
-	storage MetricsStorage
+	storage     MetricsStorage
+	syncMetrics bool
 }
 
 // GetGaugeMetric возвращает метрику типа GAUGE по имени name.
@@ -35,6 +42,7 @@ func (repo *MetricsRepository) UpdateGaugeMetric(name string, value float64) (fl
 		return 0, fmt.Errorf("failed to update gauge metric name=%s value=%f: %v", name, value, err)
 	}
 
+	repo.onMetricsUpdate()
 	return updatedValue, nil
 }
 
@@ -46,6 +54,7 @@ func (repo *MetricsRepository) UpdateCounterMetric(name string, value int64) (in
 		return 0, fmt.Errorf("failed to update counter metric name=%s value=%d: %v", name, value, err)
 	}
 
+	repo.onMetricsUpdate()
 	return updatedValue, nil
 }
 
@@ -57,4 +66,13 @@ func (repo *MetricsRepository) GetAllMetrics() ([]models.MetricInfo, error) {
 	}
 
 	return metrics, nil
+}
+
+func (repo *MetricsRepository) onMetricsUpdate() {
+	if repo.syncMetrics {
+		err := repo.storage.SaveMetrics()
+		if err != nil {
+			logger.Errorf("failed to sync metrics: %v", err)
+		}
+	}
 }

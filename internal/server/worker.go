@@ -1,29 +1,33 @@
 package server
 
 import (
+	"context"
 	"time"
 
-	"github.com/xantinium/metrix/internal/infrastructure/metricsstorage"
 	"github.com/xantinium/metrix/internal/logger"
 )
+
+type MetricsSaver interface {
+	SaveMetrics() error
+}
 
 // newMetrixServerWorker создаёт новый воркер для сервера метрик.
 //
 // storeInterval - интервал между сохранениями метрик (сек).
-func newMetrixServerWorker(storeInterval time.Duration, metricsStorage *metricsstorage.MetricsStorage) *metrixServerWorker {
+func newMetrixServerWorker(storeInterval time.Duration, metricsSaver MetricsSaver) *metrixServerWorker {
 	return &metrixServerWorker{
-		stopChan:       make(chan struct{}, 1),
-		storeInterval:  storeInterval,
-		metricsStorage: metricsStorage,
+		stopFunc:      func() {},
+		storeInterval: storeInterval,
+		metricsSaver:  metricsSaver,
 	}
 }
 
 // metrixServerWorker структура, описывающая воркер
 // для периодического сохранения метрик.
 type metrixServerWorker struct {
-	stopChan       chan struct{}
-	storeInterval  time.Duration
-	metricsStorage *metricsstorage.MetricsStorage
+	stopFunc      context.CancelFunc
+	storeInterval time.Duration
+	metricsSaver  MetricsSaver
 }
 
 // Log логирует события воркера.
@@ -39,26 +43,32 @@ func (worker *metrixServerWorker) Log(msg string) {
 
 // Run запускает воркер.
 func (worker *metrixServerWorker) Run() {
+	var ctx context.Context
+	ctx, worker.stopFunc = context.WithCancel(context.TODO())
+
 	t := time.NewTicker(worker.storeInterval)
 
-	go func() {
-		for {
-			select {
-			case <-worker.stopChan:
-				worker.Log("stopping...")
-				t.Stop()
-				return
-			case <-t.C:
-				err := worker.metricsStorage.SaveMetrics()
-				if err != nil {
-					worker.Log("failed to save metrics")
+	// Периодическая запись работает только при ненулевом storeInterval.
+	if worker.storeInterval != 0 {
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+					worker.Log("stopping...")
+					t.Stop()
+					return
+				case <-t.C:
+					err := worker.metricsSaver.SaveMetrics()
+					if err != nil {
+						worker.Log("failed to save metrics")
+					}
 				}
 			}
-		}
-	}()
+		}()
+	}
 }
 
 // Stop прекращает работу воркера.
 func (worker *metrixServerWorker) Stop() {
-	worker.stopChan <- struct{}{}
+	worker.stopFunc()
 }

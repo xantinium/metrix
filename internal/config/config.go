@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"strings"
 	"time"
 
@@ -47,10 +48,10 @@ func ParseServerArgs() ServerArgs {
 	if envArgs.Addr.Exists {
 		args.Addr = envArgs.Addr.Value
 	}
-	if envArgs.StoreInterval.Exists {
+	if envArgs.StoreInterval.Exists && envArgs.StoreInterval.Value >= 0 {
 		args.StoreInterval = time.Duration(envArgs.StoreInterval.Value) * time.Second
 	}
-	if envArgs.StoragePath.Exists {
+	if envArgs.StoragePath.Exists && fs.ValidPath(envArgs.StoragePath.Value) {
 		args.StoragePath = envArgs.StoragePath.Value
 	}
 	if envArgs.RestoreStorage.Exists {
@@ -109,10 +110,10 @@ func ParseAgentArgs() AgentArgs {
 	if envArgs.Addr.Exists {
 		args.Addr = envArgs.Addr.Value
 	}
-	if envArgs.PollInterval.Exists {
+	if envArgs.PollInterval.Exists && envArgs.PollInterval.Value > 0 {
 		args.PollInterval = envArgs.PollInterval.Value
 	}
-	if envArgs.ReportInterval.Exists {
+	if envArgs.ReportInterval.Exists && envArgs.ReportInterval.Value > 0 {
 		args.ReportInterval = time.Duration(envArgs.ReportInterval.Value) * time.Second
 	}
 
