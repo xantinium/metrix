@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xantinium/metrix/internal/infrastructure/memstorage"
 	"github.com/xantinium/metrix/internal/repository/metrics"
 	"github.com/xantinium/metrix/internal/server/handlers"
 	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
@@ -36,16 +35,20 @@ func (server *internalMetrixServer) GetMetricsRepo() *metrics.MetricsRepository 
 	return server.metricsRepo
 }
 
-// NewMetrixServer создаёт новый сервер метрик.
-func NewMetrixServer(addr string) *MetrixServer {
-	metricsStorage := memstorage.NewMemStorage()
+type MetrixServerOptions struct {
+	Addr          string
+	StoreInterval time.Duration
+	Storage       metrics.MetricsStorage
+}
 
+// NewMetrixServer создаёт новый сервер метрик.
+func NewMetrixServer(opts MetrixServerOptions) *MetrixServer {
 	router := gin.New()
 	router.Use(gin.Recovery(), middlewares.CompressMiddleware(), middlewares.LoggerMiddleware())
 
 	internalServer := &internalMetrixServer{
 		router:      router,
-		metricsRepo: metrics.NewMetricsRepository(metricsStorage),
+		metricsRepo: metrics.NewMetricsRepository(opts.Storage, opts.StoreInterval == 0),
 	}
 
 	handlers.RegisterHTMLHandler(internalServer, "/", handlers.GetAllMetricHandler)
@@ -56,10 +59,11 @@ func NewMetrixServer(addr string) *MetrixServer {
 
 	return &MetrixServer{
 		server: &http.Server{
-			Addr:    addr,
+			Addr:    opts.Addr,
 			Handler: router,
 		},
 		internalServer: internalServer,
+		worker:         newMetrixServerWorker(opts.StoreInterval, opts.Storage),
 	}
 }
 
@@ -67,6 +71,7 @@ func NewMetrixServer(addr string) *MetrixServer {
 type MetrixServer struct {
 	server         *http.Server
 	internalServer *internalMetrixServer
+	worker         *metrixServerWorker
 }
 
 // Run запускает сервер метрик.
@@ -83,11 +88,17 @@ func (s *MetrixServer) Run() chan error {
 		errChan <- nil
 	}()
 
+	s.worker.Run()
+
 	return errChan
 }
 
 // Stop останавливает сервер метрик.
 func (s *MetrixServer) Stop() error {
+	defer func() {
+		s.worker.Stop()
+	}()
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 

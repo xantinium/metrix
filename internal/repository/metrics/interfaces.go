@@ -9,4 +9,5 @@ type MetricsStorage interface {
 	GetAllMetrics() ([]models.MetricInfo, error)
 	UpdateGaugeMetric(name string, value float64) (float64, error)
 	UpdateCounterMetric(name string, value int64) (int64, error)
+	SaveMetrics() error
 }

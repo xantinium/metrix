@@ -5,12 +5,17 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/xantinium/metrix/internal/infrastructure/memstorage"
+	"github.com/xantinium/metrix/internal/infrastructure/metricsstorage"
 	"github.com/xantinium/metrix/internal/models"
 )
 
 func TestMetricsRepository_UpdateGaugeMetric(t *testing.T) {
-	repo := NewMetricsRepository(memstorage.NewMemStorage())
+	storage, err := metricsstorage.NewMetricsStorage("metrix.db", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	repo := NewMetricsRepository(storage, false)
 
 	updateOperations := []struct {
 		metricType  models.MetricType
@@ -58,7 +63,6 @@ func TestMetricsRepository_UpdateGaugeMetric(t *testing.T) {
 	}
 
 	var (
-		err                     error
 		pollCount               int64
 		allocValue, randomValue float64
 	)
