@@ -56,11 +56,14 @@ func (storage *MemStorage) GetAllMetrics() ([]models.MetricInfo, error) {
 
 	metrics := make([]models.MetricInfo, len(storage.gaugeMetrics)+len(storage.counterMetrics))
 
+	i := 0
 	for name, value := range storage.gaugeMetrics {
-		metrics = append(metrics, models.NewGaugeMetric(name, value))
+		metrics[i] = models.NewGaugeMetric(name, value)
+		i++
 	}
 	for name, value := range storage.counterMetrics {
-		metrics = append(metrics, models.NewCounterMetric(name, value))
+		metrics[i] = models.NewCounterMetric(name, value)
+		i++
 	}
 
 	return metrics, nil

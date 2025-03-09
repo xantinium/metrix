@@ -83,6 +83,7 @@ func (agent *MetrixAgent) updateMetrics(metric models.MetricInfo) {
 func (agent *MetrixAgent) updateMetricsV2(metric models.MetricInfo) {
 	var (
 		err      error
+		httpReq  *http.Request
 		reqBytes []byte
 		resp     *http.Response
 	)
@@ -100,13 +101,30 @@ func (agent *MetrixAgent) updateMetricsV2(metric models.MetricInfo) {
 	reqBytes, err = easyjson.Marshal(req)
 	if err != nil {
 		logger.Errorf("failed to update metric: %v", err)
+		return
+	}
+
+	reqBytes, err = tools.Compress(reqBytes)
+	if err != nil {
+		logger.Errorf("failed to update metric: %v", err)
+		return
 	}
 
 	reqBody := bytes.NewBuffer(reqBytes)
-	resp, err = http.Post(agent.getUpdateMetricV2HandlerURL(), "application/json", reqBody)
-
+	httpReq, err = http.NewRequest(http.MethodPost, agent.getUpdateMetricV2HandlerURL(), reqBody)
 	if err != nil {
 		logger.Errorf("failed to update metric: %v", err)
+		return
+	}
+
+	httpReq.Header.Set("Accept-Encoding", "gzip")
+	httpReq.Header.Set("Content-Encoding", "gzip")
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err = http.DefaultClient.Do(httpReq)
+	if err != nil {
+		logger.Errorf("failed to update metric: %v", err)
+		return
 	}
 
 	if resp != nil {

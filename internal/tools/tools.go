@@ -2,7 +2,12 @@
 // и структуры общего назначения.
 package tools
 
-import "strconv"
+import (
+	"bytes"
+	"compress/gzip"
+	"fmt"
+	"strconv"
+)
 
 // FloatToStr конвертирует float64 в строку.
 func FloatToStr(v float64) string {
@@ -22,4 +27,43 @@ func StrToFloat(v string) (float64, error) {
 // StrToInt конвертирует строку в int.
 func StrToInt(v string) (int, error) {
 	return strconv.Atoi(v)
+}
+
+// Compress сжимает данные при помощи пакета [compress/gzip].
+func Compress(data []byte) ([]byte, error) {
+	var b bytes.Buffer
+
+	w, err := gzip.NewWriterLevel(&b, gzip.BestSpeed)
+	if err != nil {
+		return nil, fmt.Errorf("failed init compress writer: %v", err)
+	}
+
+	_, err = w.Write(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed write data to compress temporary buffer: %v", err)
+	}
+
+	err = w.Close()
+	if err != nil {
+		return nil, fmt.Errorf("failed compress data: %v", err)
+	}
+
+	return b.Bytes(), nil
+}
+
+// Decompress распаковывает сжатые данные при помощи пакета [compress/gzip].
+func Decompress(data []byte) ([]byte, error) {
+	r, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf("failed decompress data: %v", err)
+	}
+	defer r.Close()
+
+	var b bytes.Buffer
+	_, err = b.ReadFrom(r)
+	if err != nil {
+		return nil, fmt.Errorf("failed decompress data: %v", err)
+	}
+
+	return b.Bytes(), nil
 }
