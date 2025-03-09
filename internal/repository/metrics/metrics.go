@@ -2,19 +2,26 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/models"
 )
 
+type MetricsRepositoryOptions struct {
+	Storage MetricsStorage
+	// SyncMetrics нужно ли сохранять метрики после каждой мутации.
+	SyncMetrics bool
+	DBChecker   DatabaseChecker
+}
+
 // NewMetricsRepository создаёт новый репозиторий метрик.
-//
-// syncMetrics - нужно ли сохранять метрики после каждой мутации.
-func NewMetricsRepository(storage MetricsStorage, syncMetrics bool) *MetricsRepository {
+func NewMetricsRepository(opts MetricsRepositoryOptions) *MetricsRepository {
 	return &MetricsRepository{
-		storage:     storage,
-		syncMetrics: syncMetrics,
+		storage:     opts.Storage,
+		syncMetrics: opts.SyncMetrics,
+		dbChecker:   opts.DBChecker,
 	}
 }
 
@@ -22,6 +29,7 @@ func NewMetricsRepository(storage MetricsStorage, syncMetrics bool) *MetricsRepo
 type MetricsRepository struct {
 	storage     MetricsStorage
 	syncMetrics bool
+	dbChecker   DatabaseChecker
 }
 
 // GetGaugeMetric возвращает метрику типа GAUGE по имени name.
@@ -66,6 +74,11 @@ func (repo *MetricsRepository) GetAllMetrics() ([]models.MetricInfo, error) {
 	}
 
 	return metrics, nil
+}
+
+// CheckDatabase проверяет соединение с БД.
+func (repo *MetricsRepository) CheckDatabase(ctx context.Context) error {
+	return repo.dbChecker.CheckDatabase(ctx)
 }
 
 func (repo *MetricsRepository) onMetricsUpdate() {

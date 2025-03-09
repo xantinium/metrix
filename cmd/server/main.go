@@ -1,20 +1,31 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/xantinium/metrix/internal/config"
 	"github.com/xantinium/metrix/internal/infrastructure/metricsstorage"
+	"github.com/xantinium/metrix/internal/infrastructure/postgres"
 	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/server"
 )
 
+type dbChecker struct {
+	psqlClient *postgres.PostgresClient
+}
+
+func (checker *dbChecker) CheckDatabase(ctx context.Context) error {
+	return checker.psqlClient.Ping(ctx)
+}
+
 func main() {
 	var (
-		err     error
-		storage *metricsstorage.MetricsStorage
+		err        error
+		storage    *metricsstorage.MetricsStorage
+		psqlClient *postgres.PostgresClient
 	)
 
 	args := config.ParseServerArgs()
@@ -28,10 +39,17 @@ func main() {
 	}
 	defer storage.Destroy()
 
+	psqlClient, err = postgres.NewPostgresClient(args.DatabaseConnStr)
+	if err != nil {
+		panic(err)
+	}
+	defer psqlClient.Destroy()
+
 	server := server.NewMetrixServer(server.MetrixServerOptions{
 		Addr:          args.Addr,
 		StoreInterval: args.StoreInterval,
 		Storage:       storage,
+		DBChecker:     &dbChecker{psqlClient: psqlClient},
 	})
 
 	for {

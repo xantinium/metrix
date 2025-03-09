@@ -39,6 +39,7 @@ type MetrixServerOptions struct {
 	Addr          string
 	StoreInterval time.Duration
 	Storage       metrics.MetricsStorage
+	DBChecker     metrics.DatabaseChecker
 }
 
 // NewMetrixServer создаёт новый сервер метрик.
@@ -47,13 +48,18 @@ func NewMetrixServer(opts MetrixServerOptions) *MetrixServer {
 	router.Use(gin.Recovery(), middlewares.CompressMiddleware(), middlewares.LoggerMiddleware())
 
 	internalServer := &internalMetrixServer{
-		router:      router,
-		metricsRepo: metrics.NewMetricsRepository(opts.Storage, opts.StoreInterval == 0),
+		router: router,
+		metricsRepo: metrics.NewMetricsRepository(metrics.MetricsRepositoryOptions{
+			Storage:     opts.Storage,
+			SyncMetrics: opts.StoreInterval == 0,
+			DBChecker:   opts.DBChecker,
+		}),
 	}
 
 	handlers.RegisterHTMLHandler(internalServer, "/", handlers.GetAllMetricHandler)
 	handlers.RegisterHandler(internalServer, http.MethodGet, "/value/:type/:name", handlers.GetMetricHandler)
 	handlers.RegisterHandler(internalServer, http.MethodPost, "/update/:type/:name/:value", handlers.UpdateMetricHandler)
+	handlers.RegisterHandler(internalServer, http.MethodGet, "/ping", handlers.PingHandler)
 	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/value", v2handlers.GetMetricHandler)
 	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/update", v2handlers.UpdateMetricHandler)
 
