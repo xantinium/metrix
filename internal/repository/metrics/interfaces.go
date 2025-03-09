@@ -1,6 +1,10 @@
 package metrics
 
-import "github.com/xantinium/metrix/internal/models"
+import (
+	"context"
+
+	"github.com/xantinium/metrix/internal/models"
+)
 
 // MetricsStorage интерфейс хранилища метрик.
 type MetricsStorage interface {
@@ -10,4 +14,8 @@ type MetricsStorage interface {
 	UpdateGaugeMetric(name string, value float64) (float64, error)
 	UpdateCounterMetric(name string, value int64) (int64, error)
 	SaveMetrics() error
+}
+
+type DatabaseChecker interface {
+	CheckDatabase(ctx context.Context) error
 }

@@ -15,7 +15,9 @@ func TestMetricsRepository_UpdateGaugeMetric(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	repo := NewMetricsRepository(storage, false)
+	repo := NewMetricsRepository(MetricsRepositoryOptions{
+		Storage: storage,
+	})
 
 	updateOperations := []struct {
 		metricType  models.MetricType
