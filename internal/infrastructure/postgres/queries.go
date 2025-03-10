@@ -2,14 +2,17 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/xantinium/metrix/internal/models"
 )
 
 // GetGaugeMetric возвращает метрику типа Gauge по имени name.
 func (client *PostgresClient) GetGaugeMetric(ctx context.Context, name string) (float64, error) {
-	row := client.db.QueryRowContext(ctx, "SELECT gauge_value FROM metrics "+
-		"WHERE metric_name = @name AND metric_type = @type;", name, models.Gauge)
+	row := client.db.QueryRowContext(ctx, "SELECT gauge_value FROM metrics"+
+		" WHERE name = @name AND type = @type;",
+		sql.Named("name", name),
+		sql.Named("type", models.Gauge))
 
 	var gaugeValue float64
 	err := row.Scan(&gaugeValue)
@@ -22,8 +25,10 @@ func (client *PostgresClient) GetGaugeMetric(ctx context.Context, name string) (
 
 // GetCounterMetric возвращает метрику типа Counter по имени name.
 func (client *PostgresClient) GetCounterMetric(ctx context.Context, name string) (int64, error) {
-	row := client.db.QueryRowContext(ctx, "SELECT counter_value FROM metrics "+
-		"WHERE metric_name = @name AND metric_type = @type;", name, models.Counter)
+	row := client.db.QueryRowContext(ctx, "SELECT counter_value FROM metrics"+
+		" WHERE name = @name AND type = @type;",
+		sql.Named("name", name),
+		sql.Named("type", models.Gauge))
 
 	var counterValue int64
 	err := row.Scan(&counterValue)
@@ -36,7 +41,7 @@ func (client *PostgresClient) GetCounterMetric(ctx context.Context, name string)
 
 // GetAllMetrics возвращает все существующие метрики.
 func (client *PostgresClient) GetAllMetrics(ctx context.Context) ([]models.MetricInfo, error) {
-	rows, err := client.db.QueryContext(ctx, "SELECT metric_name, metric_type, gauge_value, counter_value FROM metrics;")
+	rows, err := client.db.QueryContext(ctx, "SELECT name, type, gauge_value, counter_value FROM metrics;")
 	if err != nil {
 		return nil, convertError(err)
 	}
