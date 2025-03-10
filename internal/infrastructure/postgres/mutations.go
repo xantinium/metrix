@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/xantinium/metrix/internal/models"
 )
@@ -17,15 +16,15 @@ func (client *PostgresClient) SaveMetrics(ctx context.Context) error {
 //
 // Возвращает обновлённое значение метрики.
 func (client *PostgresClient) UpdateGaugeMetric(ctx context.Context, id string, value float64) (float64, error) {
-	row := client.db.QueryRowContext(ctx, "INSERT INTO metrix (metric_id, metric_type, gauge_value, counter_value)"+
-		" VALUES (@metric_id, @metric_type, @gauge_value, 0)"+
-		" ON CONFLICT (metric_id, metric_type)"+
+	row := client.db.QueryRowContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
+		" VALUES ($1, $2, $3, 0)"+
+		" ON CONFLICT (id, type)"+
 		" DO UPDATE SET"+
-		" gauge_value = @gauge_value"+
+		" gauge_value = $3"+
 		" RETURNING gauge_value;",
-		sql.Named("metric_id", id),
-		sql.Named("metric_type", models.Gauge),
-		sql.Named("gauge_value", value))
+		id,
+		models.Gauge,
+		value)
 
 	var gaugeValue float64
 	err := row.Scan(&gaugeValue)
@@ -41,15 +40,15 @@ func (client *PostgresClient) UpdateGaugeMetric(ctx context.Context, id string, 
 //
 // Возвращает обновлённое значение метрики.
 func (client *PostgresClient) UpdateCounterMetric(ctx context.Context, id string, value int64) (int64, error) {
-	row := client.db.QueryRowContext(ctx, "INSERT INTO metrix (metric_id, metric_type, gauge_value, counter_value)"+
-		" VALUES (@metric_id, @metric_type, 0, @counter_value)"+
-		" ON CONFLICT (metric_id, metric_type)"+
+	row := client.db.QueryRowContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
+		" VALUES ($1, $2, 0, $3)"+
+		" ON CONFLICT (id, type)"+
 		" DO UPDATE SET"+
-		" counter_value = metrix.counter_value + @counter_value"+
+		" counter_value = counter_value + $3"+
 		" RETURNING counter_value;",
-		sql.Named("metric_id", id),
-		sql.Named("metric_type", models.Gauge),
-		sql.Named("counter_value", value))
+		id,
+		models.Gauge,
+		value)
 
 	var counterValue int64
 	err := row.Scan(&counterValue)
