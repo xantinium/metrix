@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/xantinium/metrix/internal/models"
 )
@@ -16,10 +17,15 @@ func (client *PostgresClient) SaveMetrics(ctx context.Context) error {
 //
 // Возвращает обновлённое значение метрики.
 func (client *PostgresClient) UpdateGaugeMetric(ctx context.Context, id string, value float64) (float64, error) {
-	row := client.db.QueryRowContext(ctx, "UPDATE metrics"+
-		" SET gauge_value = @value"+
-		" WHERE id = @id AND type = @type"+
-		" RETURNING gauge_value;", id, models.Gauge)
+	row := client.db.QueryRowContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
+		" VALUES (@id, @type, @gauge_value, 0)"+
+		" ON CONFLICT (id, type)"+
+		" DO UPDATE SET"+
+		" gauge_value = @gauge_value"+
+		" RETURNING gauge_value;",
+		sql.Named("id", id),
+		sql.Named("type", models.Gauge),
+		sql.Named("gauge_value", value))
 
 	var gaugeValue float64
 	err := row.Scan(&gaugeValue)
@@ -35,10 +41,15 @@ func (client *PostgresClient) UpdateGaugeMetric(ctx context.Context, id string, 
 //
 // Возвращает обновлённое значение метрики.
 func (client *PostgresClient) UpdateCounterMetric(ctx context.Context, id string, value int64) (int64, error) {
-	row := client.db.QueryRowContext(ctx, "UPDATE metrics"+
-		" SET counter_value = counter_value + @value"+
-		" WHERE id = @id AND type = @type"+
-		" RETURNING counter_value;", id, models.Counter)
+	row := client.db.QueryRowContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
+		" VALUES (@id, @type, 0, @counter_value)"+
+		" ON CONFLICT (id, type)"+
+		" DO UPDATE SET"+
+		" counter_value = counter_value + @counter_value"+
+		" RETURNING counter_value;",
+		sql.Named("id", id),
+		sql.Named("type", models.Gauge),
+		sql.Named("counter_value", value))
 
 	var counterValue int64
 	err := row.Scan(&counterValue)
