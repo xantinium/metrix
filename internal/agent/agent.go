@@ -93,7 +93,7 @@ func (agent *MetrixAgent) updateMetricsV2(metric models.MetricInfo) {
 	delta := metric.CounterValue()
 
 	req := Metrics{
-		ID:    metric.Name(),
+		ID:    metric.ID(),
 		MType: string(metric.Type()),
 		Delta: &delta,
 		Value: &value,
@@ -145,7 +145,7 @@ func (agent MetrixAgent) getUpdateMetricHandlerURL(metric models.MetricInfo) str
 		metricValueStr = tools.IntToStr(metric.CounterValue())
 	}
 
-	return fmt.Sprintf("http://%s/update/%s/%s/%s", agent.serverAddr, metricTypeStr, metric.Name(), metricValueStr)
+	return fmt.Sprintf("http://%s/update/%s/%s/%s", agent.serverAddr, metricTypeStr, metric.ID(), metricValueStr)
 }
 
 // getUpdateMetricV2HandlerURL создаёт URL-адрес для запроса на обновление метрик в JSON формате.
