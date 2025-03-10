@@ -45,7 +45,7 @@ func (client *PostgresClient) UpdateCounterMetric(ctx context.Context, id string
 		" VALUES (@metric_id, @metric_type, 0, @counter_value)"+
 		" ON CONFLICT (metric_id, metric_type)"+
 		" DO UPDATE SET"+
-		" counter_value = counter_value + @counter_value"+
+		" counter_value = metrix.counter_value + @counter_value"+
 		" RETURNING counter_value;",
 		sql.Named("metric_id", id),
 		sql.Named("metric_type", models.Gauge),
