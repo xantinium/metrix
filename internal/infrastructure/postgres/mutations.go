@@ -17,9 +17,9 @@ func (client *PostgresClient) SaveMetrics(ctx context.Context) error {
 //
 // Возвращает обновлённое значение метрики.
 func (client *PostgresClient) UpdateGaugeMetric(ctx context.Context, id string, value float64) (float64, error) {
-	row := client.db.QueryRowContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
+	row := client.db.QueryRowContext(ctx, "INSERT INTO metrics (metric_id, metric_type, gauge_value, counter_value)"+
 		" VALUES (@id, @type, @gauge_value, 0)"+
-		" ON CONFLICT (id, type)"+
+		" ON CONFLICT (metric_id, metric_type)"+
 		" DO UPDATE SET"+
 		" gauge_value = @gauge_value"+
 		" RETURNING gauge_value;",
@@ -41,9 +41,9 @@ func (client *PostgresClient) UpdateGaugeMetric(ctx context.Context, id string, 
 //
 // Возвращает обновлённое значение метрики.
 func (client *PostgresClient) UpdateCounterMetric(ctx context.Context, id string, value int64) (int64, error) {
-	row := client.db.QueryRowContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
+	row := client.db.QueryRowContext(ctx, "INSERT INTO metrics (metric_id, metric_type, gauge_value, counter_value)"+
 		" VALUES (@id, @type, 0, @counter_value)"+
-		" ON CONFLICT (id, type)"+
+		" ON CONFLICT (metric_id, metric_type)"+
 		" DO UPDATE SET"+
 		" counter_value = counter_value + @counter_value"+
 		" RETURNING counter_value;",
