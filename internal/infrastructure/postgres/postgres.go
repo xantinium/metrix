@@ -9,9 +9,17 @@ import (
 )
 
 // NewPostgresClient создаёт новый клиент для работы с PostgreSQL.
-func NewPostgresClient(connStr string) (*PostgresClient, error) {
+func NewPostgresClient(ctx context.Context, connStr string) (*PostgresClient, error) {
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
+		return nil, err
+	}
+
+	client := &PostgresClient{db: db}
+
+	err = client.initTables(ctx)
+	if err != nil {
+		db.Close()
 		return nil, err
 	}
 

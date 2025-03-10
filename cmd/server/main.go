@@ -14,16 +14,17 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
 	args := config.ParseServerArgs()
 
 	logger.Init(args.IsDev)
 	defer logger.Destroy()
 
-	server, cleanUp, err := getMetrixServer(args)
+	server, cleanUp, err := getMetrixServer(ctx, args)
 	if err != nil {
 		panic(err)
 	}
-	defer cleanUp(context.TODO())
+	defer cleanUp(ctx)
 
 	for {
 		select {
@@ -53,9 +54,9 @@ func (emptyDBChecker) Ping(_ context.Context) error {
 	return nil
 }
 
-func getMetrixServer(args config.ServerArgs) (*server.MetrixServer, cleanUpFunc, error) {
+func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.MetrixServer, cleanUpFunc, error) {
 	if args.DatabaseConnStr != "" {
-		psqlClient, err := postgres.NewPostgresClient(args.DatabaseConnStr)
+		psqlClient, err := postgres.NewPostgresClient(ctx, args.DatabaseConnStr)
 		if err != nil {
 			return nil, nil, err
 		}

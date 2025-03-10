@@ -2,7 +2,7 @@ package postgres
 
 import "context"
 
-func (client *PostgresClient) InitTables(ctx context.Context) error {
+func (client *PostgresClient) initTables(ctx context.Context) error {
 	err := client.initMetricsTable(ctx)
 	if err != nil {
 		return err
