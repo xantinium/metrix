@@ -12,7 +12,7 @@ func (client *PostgresClient) initTables(ctx context.Context) error {
 }
 
 func (client *PostgresClient) initMetricsTable(ctx context.Context) error {
-	_, err := client.db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS metrics ("+
+	_, err := client.db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS metrix ("+
 		"metric_id VARCHAR(50) NOT NULL,"+
 		"metric_type SMALLINT NOT NULL,"+
 		"gauge_value DOUBLE PRECISION NOT NULL,"+
