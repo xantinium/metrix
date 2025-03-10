@@ -11,7 +11,7 @@ func (client *PostgresClient) GetGaugeMetric(ctx context.Context, id string) (fl
 	row := client.db.QueryRowContext(ctx, "SELECT gauge_value FROM metrics"+
 		" WHERE id = $1 AND type = $2;",
 		id,
-		"type", models.Gauge)
+		serializeMetricType(models.Gauge))
 
 	var gaugeValue float64
 	err := row.Scan(&gaugeValue)
@@ -27,7 +27,7 @@ func (client *PostgresClient) GetCounterMetric(ctx context.Context, id string) (
 	row := client.db.QueryRowContext(ctx, "SELECT counter_value FROM metrics"+
 		" WHERE id = $1 AND type = $12;",
 		id,
-		models.Gauge)
+		serializeMetricType(models.Gauge))
 
 	var counterValue int64
 	err := row.Scan(&counterValue)
@@ -57,7 +57,7 @@ func (client *PostgresClient) GetAllMetrics(ctx context.Context) ([]models.Metri
 		var (
 			metricID        string
 			metricType      models.MetricType
-			maybeMetricType string
+			maybeMetricType psqlMetricType
 			gaugeValue      float64
 			counterValue    int64
 		)
@@ -67,7 +67,7 @@ func (client *PostgresClient) GetAllMetrics(ctx context.Context) ([]models.Metri
 			return nil, convertError(err)
 		}
 
-		metricType, err = models.ParseStringAsMetricType(maybeMetricType)
+		metricType, err = deserializeMetricType(maybeMetricType)
 		if err != nil {
 			return nil, convertError(err)
 		}

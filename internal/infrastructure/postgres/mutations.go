@@ -23,7 +23,7 @@ func (client *PostgresClient) UpdateGaugeMetric(ctx context.Context, id string, 
 		" gauge_value = $3"+
 		" RETURNING gauge_value;",
 		id,
-		models.Gauge,
+		serializeMetricType(models.Gauge),
 		value)
 
 	var gaugeValue float64
@@ -47,7 +47,7 @@ func (client *PostgresClient) UpdateCounterMetric(ctx context.Context, id string
 		" counter_value = metrics.counter_value + $3"+
 		" RETURNING counter_value;",
 		id,
-		models.Gauge,
+		serializeMetricType(models.Gauge),
 		value)
 
 	var counterValue int64
