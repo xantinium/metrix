@@ -1,9 +1,10 @@
-// Пакет metricsstorage содержит реализацию хранилища метрик.
-// На данный момент, все данные хранятся в оперативной памяти.
+// Пакет memstorage содержит реализацию хранилища метрик,
+// все данные которого хранятся в оперативной памяти.
 // Дополнительно, имеется возможность записи/чтения метрик из файла.
-package metricsstorage
+package memstorage
 
 import (
+	"context"
 	"errors"
 	"os"
 	"sync"
@@ -15,10 +16,10 @@ import (
 
 // NewMemStorage создаёт новое хранилище метрик.
 // При необходимости, восстанавливает предыдущие знаениченя метрик.
-func NewMetricsStorage(path string, restore bool) (*MetricsStorage, error) {
+func NewMemStorage(path string, restore bool) (*MemStorage, error) {
 	var err error
 
-	storage := &MetricsStorage{
+	storage := &MemStorage{
 		fileW:          &fileWriter{path: path},
 		gaugeMetrics:   make(map[string]float64),
 		counterMetrics: make(map[string]int64),
@@ -34,15 +35,15 @@ func NewMetricsStorage(path string, restore bool) (*MetricsStorage, error) {
 	return storage, nil
 }
 
-// MetricsStorage структура, реализующая хранилище метрик.
-type MetricsStorage struct {
+// MemStorage структура, реализующая хранилище метрик.
+type MemStorage struct {
 	mx             sync.RWMutex
 	fileW          *fileWriter
 	gaugeMetrics   map[string]float64
 	counterMetrics map[string]int64
 }
 
-func (storage *MetricsStorage) restore(path string) error {
+func (storage *MemStorage) restore(path string) error {
 	_, err := os.Stat(path)
 	if err != nil {
 		// Если файл не существует, то просто выходим.
@@ -80,8 +81,8 @@ func (storage *MetricsStorage) restore(path string) error {
 }
 
 // Destroy уничтожает хранилище метрик.
-func (storage *MetricsStorage) Destroy() {
-	err := storage.SaveMetrics()
+func (storage *MemStorage) Destroy(ctx context.Context) {
+	err := storage.SaveMetrics(ctx)
 	if err != nil {
 		logger.Errorf("failed to save metrics: %v", err)
 	}

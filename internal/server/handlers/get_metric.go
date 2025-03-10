@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -23,17 +24,17 @@ func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, error
 
 	switch req.metricType {
 	case models.Gauge:
-		return getGaugeMetricHandler(metricsRepo, req.metricName)
+		return getGaugeMetricHandler(ctx, metricsRepo, req.metricName)
 	case models.Counter:
-		return getCounterMetricHandler(metricsRepo, req.metricName)
+		return getCounterMetricHandler(ctx, metricsRepo, req.metricName)
 	default:
 		// Попасть сюда невозможно, из-за валидации запроса.
 		return http.StatusInternalServerError, "", fmt.Errorf("unknown metric type")
 	}
 }
 
-func getGaugeMetricHandler(repo *metrics.MetricsRepository, name string) (int, string, error) {
-	value, err := repo.GetGaugeMetric(name)
+func getGaugeMetricHandler(ctx context.Context, repo *metrics.MetricsRepository, name string) (int, string, error) {
+	value, err := repo.GetGaugeMetric(ctx, name)
 	if err != nil {
 		if err == models.ErrNotFound {
 			return http.StatusNotFound, "", err
@@ -45,8 +46,8 @@ func getGaugeMetricHandler(repo *metrics.MetricsRepository, name string) (int, s
 	return http.StatusOK, tools.FloatToStr(value), nil
 }
 
-func getCounterMetricHandler(repo *metrics.MetricsRepository, name string) (int, string, error) {
-	value, err := repo.GetCounterMetric(name)
+func getCounterMetricHandler(ctx context.Context, repo *metrics.MetricsRepository, name string) (int, string, error) {
+	value, err := repo.GetCounterMetric(ctx, name)
 	if err != nil {
 		if err == models.ErrNotFound {
 			return http.StatusNotFound, "", err

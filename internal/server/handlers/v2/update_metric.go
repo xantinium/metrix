@@ -33,10 +33,10 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 
 	switch req.MetricType {
 	case models.Gauge:
-		updatedGaugeValue, err = metricsRepo.UpdateGaugeMetric(req.MetricName, req.GaugeValue)
+		updatedGaugeValue, err = metricsRepo.UpdateGaugeMetric(ctx, req.MetricName, req.GaugeValue)
 		resp.Value = &updatedGaugeValue
 	case models.Counter:
-		updatedCounterValue, err = metricsRepo.UpdateCounterMetric(req.MetricName, req.CounterValue)
+		updatedCounterValue, err = metricsRepo.UpdateCounterMetric(ctx, req.MetricName, req.CounterValue)
 		resp.Delta = &updatedCounterValue
 	}
 

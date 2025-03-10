@@ -1,6 +1,7 @@
 package v2handlers
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,17 +25,17 @@ func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.Mars
 
 	switch req.MetricType {
 	case models.Gauge:
-		return getGaugeMetricHandler(metricsRepo, req.MetricName)
+		return getGaugeMetricHandler(ctx, metricsRepo, req.MetricName)
 	case models.Counter:
-		return getCounterMetricHandler(metricsRepo, req.MetricName)
+		return getCounterMetricHandler(ctx, metricsRepo, req.MetricName)
 	default:
 		// Попасть сюда невозможно, из-за валидации запроса.
 		return http.StatusInternalServerError, nil, fmt.Errorf("unknown metric type")
 	}
 }
 
-func getGaugeMetricHandler(repo *metrics.MetricsRepository, name string) (int, easyjson.Marshaler, error) {
-	value, err := repo.GetGaugeMetric(name)
+func getGaugeMetricHandler(ctx context.Context, repo *metrics.MetricsRepository, name string) (int, easyjson.Marshaler, error) {
+	value, err := repo.GetGaugeMetric(ctx, name)
 	if err != nil {
 		if err == models.ErrNotFound {
 			return http.StatusNotFound, nil, err
@@ -50,8 +51,8 @@ func getGaugeMetricHandler(repo *metrics.MetricsRepository, name string) (int, e
 	}, nil
 }
 
-func getCounterMetricHandler(repo *metrics.MetricsRepository, name string) (int, easyjson.Marshaler, error) {
-	value, err := repo.GetCounterMetric(name)
+func getCounterMetricHandler(ctx context.Context, repo *metrics.MetricsRepository, name string) (int, easyjson.Marshaler, error) {
+	value, err := repo.GetCounterMetric(ctx, name)
 	if err != nil {
 		if err == models.ErrNotFound {
 			return http.StatusNotFound, nil, err

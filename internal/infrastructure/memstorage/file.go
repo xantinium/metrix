@@ -1,6 +1,7 @@
-package metricsstorage
+package memstorage
 
 import (
+	"context"
 	"os"
 	"sync"
 
@@ -21,8 +22,8 @@ type metricsStruct struct {
 }
 
 // SaveMetrics сохраняет текущие значения метрик в файл.
-func (storage *MetricsStorage) SaveMetrics() error {
-	metrics, err := storage.GetAllMetrics()
+func (storage *MemStorage) SaveMetrics(ctx context.Context) error {
+	metrics, err := storage.GetAllMetrics(ctx)
 	if err != nil {
 		return err
 	}

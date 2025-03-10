@@ -13,7 +13,7 @@ import (
 
 // GetAllMetricHandler реализация хендлера для получения всех метрик в виде HTML.
 func GetAllMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, error) {
-	metrics, err := s.GetMetricsRepo().GetAllMetrics()
+	metrics, err := s.GetMetricsRepo().GetAllMetrics(ctx)
 	if err != nil {
 		return http.StatusInternalServerError, "", err
 	}

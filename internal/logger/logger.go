@@ -34,7 +34,7 @@ func Destroy() {
 
 type Field struct {
 	Name  string
-	Value interface{}
+	Value any
 }
 
 // Info пишет структурированный лог уровня INFO.
@@ -43,7 +43,7 @@ func Info(msg string, fields ...Field) {
 }
 
 // Infof пишет форматированный лог уровня INFO.
-func Infof(format string, args ...interface{}) {
+func Infof(format string, args ...any) {
 	logger.Infof(format, args)
 }
 
@@ -53,7 +53,7 @@ func Error(msg string, fields ...Field) {
 }
 
 // Errorf пишет форматированный лог уровня ERROR.
-func Errorf(format string, args ...interface{}) {
+func Errorf(format string, args ...any) {
 	logger.Errorf(format, args)
 }
 
@@ -65,7 +65,7 @@ const (
 )
 
 func log(level logLevel, msg string, fields ...Field) {
-	args := make([]interface{}, len(fields)*2)
+	args := make([]any, len(fields)*2)
 
 	for i, field := range fields {
 		args[2*i] = field.Name

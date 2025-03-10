@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/xantinium/metrix/internal/models"
 )
 
 // NewPostgresClient создаёт новый клиент для работы с PostgreSQL.
@@ -28,6 +29,14 @@ func (client *PostgresClient) Ping(ctx context.Context) error {
 }
 
 // Destroy уничтожает клиент.
-func (client *PostgresClient) Destroy() {
+func (client *PostgresClient) Destroy(_ context.Context) {
 	client.db.Close()
+}
+
+func convertError(err error) error {
+	if err == sql.ErrNoRows {
+		return models.ErrNotFound
+	}
+
+	return err
 }

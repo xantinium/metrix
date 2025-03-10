@@ -22,9 +22,9 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, er
 
 	switch req.metricType {
 	case models.Gauge:
-		_, err = metricsRepo.UpdateGaugeMetric(req.metricName, req.metricValue)
+		_, err = metricsRepo.UpdateGaugeMetric(ctx, req.metricName, req.metricValue)
 	case models.Counter:
-		_, err = metricsRepo.UpdateCounterMetric(req.metricName, int64(req.metricValue))
+		_, err = metricsRepo.UpdateCounterMetric(ctx, req.metricName, int64(req.metricValue))
 	}
 
 	if err != nil {
