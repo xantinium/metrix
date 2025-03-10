@@ -1,6 +1,7 @@
-package metricsstorage
+package memstorage
 
 import (
+	"context"
 	"os"
 	"sync"
 
@@ -9,7 +10,7 @@ import (
 )
 
 type metricItem struct {
-	Name  string  `json:"name"`
+	ID    string  `json:"id"`
 	Type  string  `json:"type"`
 	Delta int64   `json:"delta"`
 	Value float64 `json:"value"`
@@ -21,8 +22,8 @@ type metricsStruct struct {
 }
 
 // SaveMetrics сохраняет текущие значения метрик в файл.
-func (storage *MetricsStorage) SaveMetrics() error {
-	metrics, err := storage.GetAllMetrics()
+func (storage *MemStorage) SaveMetrics(ctx context.Context) error {
+	metrics, err := storage.GetAllMetrics(ctx)
 	if err != nil {
 		return err
 	}
@@ -30,7 +31,7 @@ func (storage *MetricsStorage) SaveMetrics() error {
 	metrisToSave := metricsStruct{Metrics: make([]metricItem, len(metrics))}
 	for i := range metrics {
 		item := metricItem{
-			Name: metrics[i].Name(),
+			ID:   metrics[i].ID(),
 			Type: string(metrics[i].Type()),
 		}
 		switch metrics[i].Type() {
