@@ -9,11 +9,11 @@ import (
 // MetricsStorage интерфейс хранилища метрик.
 type MetricsStorage interface {
 	Destroy(ctx context.Context)
-	GetGaugeMetric(ctx context.Context, name string) (float64, error)
-	GetCounterMetric(ctx context.Context, name string) (int64, error)
+	GetGaugeMetric(ctx context.Context, id string) (float64, error)
+	GetCounterMetric(ctx context.Context, id string) (int64, error)
 	GetAllMetrics(ctx context.Context) ([]models.MetricInfo, error)
-	UpdateGaugeMetric(ctx context.Context, name string, value float64) (float64, error)
-	UpdateCounterMetric(ctx context.Context, name string, value int64) (int64, error)
+	UpdateGaugeMetric(ctx context.Context, id string, value float64) (float64, error)
+	UpdateCounterMetric(ctx context.Context, id string, value int64) (int64, error)
 	SaveMetrics(ctx context.Context) error
 }
 

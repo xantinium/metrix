@@ -22,9 +22,9 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, er
 
 	switch req.metricType {
 	case models.Gauge:
-		_, err = metricsRepo.UpdateGaugeMetric(ctx, req.metricName, req.metricValue)
+		_, err = metricsRepo.UpdateGaugeMetric(ctx, req.metricID, req.metricValue)
 	case models.Counter:
-		_, err = metricsRepo.UpdateCounterMetric(ctx, req.metricName, int64(req.metricValue))
+		_, err = metricsRepo.UpdateCounterMetric(ctx, req.metricID, int64(req.metricValue))
 	}
 
 	if err != nil {
@@ -37,17 +37,17 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, er
 // updateMetricRequest структура запроса обновления метрик.
 type updateMetricRequest struct {
 	metricType  models.MetricType
-	metricName  string
+	metricID    string
 	metricValue float64
 }
 
 // parseUpdateMetricRequest парсит сырой HTTP-запрос в структуру запроса.
 func parseUpdateMetricRequest(r *gin.Context) (updateMetricRequest, error) {
 	var (
-		err                                           error
-		maybeMetricType, metricName, maybeMetricValue string
-		metricType                                    models.MetricType
-		metricValue                                   float64
+		err                                         error
+		maybeMetricType, metricID, maybeMetricValue string
+		metricType                                  models.MetricType
+		metricValue                                 float64
 	)
 
 	maybeMetricType = r.Param("type")
@@ -60,9 +60,9 @@ func parseUpdateMetricRequest(r *gin.Context) (updateMetricRequest, error) {
 		return updateMetricRequest{}, err
 	}
 
-	metricName = r.Param("name")
-	if metricName == "" {
-		return updateMetricRequest{}, fmt.Errorf("metric name is missing")
+	metricID = r.Param("id")
+	if metricID == "" {
+		return updateMetricRequest{}, fmt.Errorf("metric id is missing")
 	}
 
 	maybeMetricValue = r.Param("value")
@@ -77,7 +77,7 @@ func parseUpdateMetricRequest(r *gin.Context) (updateMetricRequest, error) {
 
 	return updateMetricRequest{
 		metricType:  metricType,
-		metricName:  metricName,
+		metricID:    metricID,
 		metricValue: metricValue,
 	}, nil
 }

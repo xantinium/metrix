@@ -24,32 +24,32 @@ func TestMetricsRepository_UpdateGaugeMetric(t *testing.T) {
 
 	updateOperations := []struct {
 		metricType  models.MetricType
-		metricName  string
+		metricID    string
 		metricValue float64
 	}{
 		{
 			metricType:  models.Gauge,
-			metricName:  "Alloc",
+			metricID:    "Alloc",
 			metricValue: 123.45,
 		},
 		{
 			metricType:  models.Counter,
-			metricName:  "PollCount",
+			metricID:    "PollCount",
 			metricValue: 222,
 		},
 		{
 			metricType:  models.Gauge,
-			metricName:  "RandomValue",
+			metricID:    "RandomValue",
 			metricValue: 78,
 		},
 		{
 			metricType:  models.Gauge,
-			metricName:  "Alloc",
+			metricID:    "Alloc",
 			metricValue: 2.1,
 		},
 		{
 			metricType:  models.Counter,
-			metricName:  "PollCount",
+			metricID:    "PollCount",
 			metricValue: 78,
 		},
 	}
@@ -59,9 +59,9 @@ func TestMetricsRepository_UpdateGaugeMetric(t *testing.T) {
 
 		switch oper.metricType {
 		case models.Gauge:
-			_, err = repo.UpdateGaugeMetric(ctx, oper.metricName, oper.metricValue)
+			_, err = repo.UpdateGaugeMetric(ctx, oper.metricID, oper.metricValue)
 		case models.Counter:
-			_, err = repo.UpdateCounterMetric(ctx, oper.metricName, int64(oper.metricValue))
+			_, err = repo.UpdateCounterMetric(ctx, oper.metricID, int64(oper.metricValue))
 		}
 
 		require.NoError(t, err)

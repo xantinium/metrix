@@ -7,11 +7,11 @@ import (
 	"github.com/xantinium/metrix/internal/models"
 )
 
-// GetGaugeMetric возвращает метрику типа Gauge по имени name.
-func (client *PostgresClient) GetGaugeMetric(ctx context.Context, name string) (float64, error) {
+// GetGaugeMetric возвращает метрику типа Gauge по идентификатору id.
+func (client *PostgresClient) GetGaugeMetric(ctx context.Context, id string) (float64, error) {
 	row := client.db.QueryRowContext(ctx, "SELECT gauge_value FROM metrics"+
-		" WHERE name = @name AND type = @type;",
-		sql.Named("name", name),
+		" WHERE id = @id AND type = @type;",
+		sql.Named("id", id),
 		sql.Named("type", models.Gauge))
 
 	var gaugeValue float64
@@ -23,11 +23,11 @@ func (client *PostgresClient) GetGaugeMetric(ctx context.Context, name string) (
 	return gaugeValue, nil
 }
 
-// GetCounterMetric возвращает метрику типа Counter по имени name.
-func (client *PostgresClient) GetCounterMetric(ctx context.Context, name string) (int64, error) {
+// GetCounterMetric возвращает метрику типа Counter по идентификатору id.
+func (client *PostgresClient) GetCounterMetric(ctx context.Context, id string) (int64, error) {
 	row := client.db.QueryRowContext(ctx, "SELECT counter_value FROM metrics"+
-		" WHERE name = @name AND type = @type;",
-		sql.Named("name", name),
+		" WHERE id = @id AND type = @type;",
+		sql.Named("id", id),
 		sql.Named("type", models.Gauge))
 
 	var counterValue int64
@@ -41,7 +41,7 @@ func (client *PostgresClient) GetCounterMetric(ctx context.Context, name string)
 
 // GetAllMetrics возвращает все существующие метрики.
 func (client *PostgresClient) GetAllMetrics(ctx context.Context) ([]models.MetricInfo, error) {
-	rows, err := client.db.QueryContext(ctx, "SELECT name, type, gauge_value, counter_value FROM metrics;")
+	rows, err := client.db.QueryContext(ctx, "SELECT id, type, gauge_value, counter_value FROM metrics;")
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -56,14 +56,14 @@ func (client *PostgresClient) GetAllMetrics(ctx context.Context) ([]models.Metri
 		}
 
 		var (
-			metricName      string
+			metricID        string
 			metricType      models.MetricType
 			maybeMetricType string
 			gaugeValue      float64
 			counterValue    int64
 		)
 
-		err = rows.Scan(&metricName, &maybeMetricType, &gaugeValue, &counterValue)
+		err = rows.Scan(&metricID, &maybeMetricType, &gaugeValue, &counterValue)
 		if err != nil {
 			return nil, convertError(err)
 		}
@@ -75,9 +75,9 @@ func (client *PostgresClient) GetAllMetrics(ctx context.Context) ([]models.Metri
 
 		switch metricType {
 		case models.Gauge:
-			metrics = append(metrics, models.NewGaugeMetric(metricName, gaugeValue))
+			metrics = append(metrics, models.NewGaugeMetric(metricID, gaugeValue))
 		case models.Counter:
-			metrics = append(metrics, models.NewCounterMetric(metricName, counterValue))
+			metrics = append(metrics, models.NewCounterMetric(metricID, counterValue))
 		}
 	}
 

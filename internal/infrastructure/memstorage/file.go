@@ -10,7 +10,7 @@ import (
 )
 
 type metricItem struct {
-	Name  string  `json:"name"`
+	ID    string  `json:"id"`
 	Type  string  `json:"type"`
 	Delta int64   `json:"delta"`
 	Value float64 `json:"value"`
@@ -31,7 +31,7 @@ func (storage *MemStorage) SaveMetrics(ctx context.Context) error {
 	metrisToSave := metricsStruct{Metrics: make([]metricItem, len(metrics))}
 	for i := range metrics {
 		item := metricItem{
-			Name: metrics[i].Name(),
+			ID:   metrics[i].ID(),
 			Type: string(metrics[i].Type()),
 		}
 		switch metrics[i].Type() {

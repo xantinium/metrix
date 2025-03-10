@@ -71,9 +71,9 @@ func (storage *MemStorage) restore(path string) error {
 	for _, metric := range metrics.Metrics {
 		switch metric.Type {
 		case string(models.Gauge):
-			storage.gaugeMetrics[metric.Name] = metric.Value
+			storage.gaugeMetrics[metric.ID] = metric.Value
 		case string(models.Counter):
-			storage.counterMetrics[metric.Name] = metric.Delta
+			storage.counterMetrics[metric.ID] = metric.Delta
 		}
 	}
 

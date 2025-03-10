@@ -32,22 +32,22 @@ type MetricsRepository struct {
 	dbChecker   DatabaseChecker
 }
 
-// GetGaugeMetric возвращает метрику типа Gauge по имени name.
-func (repo *MetricsRepository) GetGaugeMetric(ctx context.Context, name string) (float64, error) {
-	return repo.storage.GetGaugeMetric(ctx, name)
+// GetGaugeMetric возвращает метрику типа Gauge по идентификатору id.
+func (repo *MetricsRepository) GetGaugeMetric(ctx context.Context, id string) (float64, error) {
+	return repo.storage.GetGaugeMetric(ctx, id)
 }
 
-// GetCounterMetric возвращает метрику типа Counter по имени name.
-func (repo *MetricsRepository) GetCounterMetric(ctx context.Context, name string) (int64, error) {
-	return repo.storage.GetCounterMetric(ctx, name)
+// GetCounterMetric возвращает метрику типа Counter по идентификатору id.
+func (repo *MetricsRepository) GetCounterMetric(ctx context.Context, id string) (int64, error) {
+	return repo.storage.GetCounterMetric(ctx, id)
 }
 
 // UpdateGaugeMetric обновляет текущее значение метрики типа Gauge
-// с именем name, перезаписывая его значением value.
-func (repo *MetricsRepository) UpdateGaugeMetric(ctx context.Context, name string, value float64) (float64, error) {
-	updatedValue, err := repo.storage.UpdateGaugeMetric(ctx, name, value)
+// с идентификатором id, перезаписывая его значением value.
+func (repo *MetricsRepository) UpdateGaugeMetric(ctx context.Context, id string, value float64) (float64, error) {
+	updatedValue, err := repo.storage.UpdateGaugeMetric(ctx, id, value)
 	if err != nil {
-		return 0, fmt.Errorf("failed to update gauge metric name=%s value=%f: %v", name, value, err)
+		return 0, fmt.Errorf("failed to update gauge metric id=%s value=%f: %v", id, value, err)
 	}
 
 	repo.onMetricsUpdate(ctx)
@@ -55,11 +55,11 @@ func (repo *MetricsRepository) UpdateGaugeMetric(ctx context.Context, name strin
 }
 
 // UpdateCounterMetric обновляет текущее значение метрики типа Counter
-// с именем name, добавляя к нему значение value.
-func (repo *MetricsRepository) UpdateCounterMetric(ctx context.Context, name string, value int64) (int64, error) {
-	updatedValue, err := repo.storage.UpdateCounterMetric(ctx, name, value)
+// с идентификатором id, добавляя к нему значение value.
+func (repo *MetricsRepository) UpdateCounterMetric(ctx context.Context, id string, value int64) (int64, error) {
+	updatedValue, err := repo.storage.UpdateCounterMetric(ctx, id, value)
 	if err != nil {
-		return 0, fmt.Errorf("failed to update counter metric name=%s value=%d: %v", name, value, err)
+		return 0, fmt.Errorf("failed to update counter metric id=%s value=%d: %v", id, value, err)
 	}
 
 	repo.onMetricsUpdate(ctx)

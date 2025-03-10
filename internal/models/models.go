@@ -33,18 +33,18 @@ func ParseStringAsMetricType(maybeMetricType string) (MetricType, error) {
 }
 
 // NewGaugeMetric создаёт новую метрику типа Gauge.
-func NewGaugeMetric(name string, value float64) MetricInfo {
+func NewGaugeMetric(id string, value float64) MetricInfo {
 	return MetricInfo{
-		metricName: name,
+		metricID:   id,
 		metricType: Gauge,
 		gaugeValue: value,
 	}
 }
 
 // NewCounterMetric создаёт новую метрику типа Counter.
-func NewCounterMetric(name string, value int64) MetricInfo {
+func NewCounterMetric(id string, value int64) MetricInfo {
 	return MetricInfo{
-		metricName:   name,
+		metricID:     id,
 		metricType:   Counter,
 		counterValue: value,
 	}
@@ -52,15 +52,15 @@ func NewCounterMetric(name string, value int64) MetricInfo {
 
 // MetricInfo структура, описывающая метрику.
 type MetricInfo struct {
-	metricName   string
+	metricID     string
 	metricType   MetricType
 	gaugeValue   float64
 	counterValue int64
 }
 
-// Name возвращает имя метрики.
-func (info MetricInfo) Name() string {
-	return info.metricName
+// ID возвращает идентификатор метрики.
+func (info MetricInfo) ID() string {
+	return info.metricID
 }
 
 // Type возвращает тип метрики.
