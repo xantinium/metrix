@@ -178,14 +178,13 @@ func (agent *MetrixAgent) updateMetricsBatch(metrics []models.MetricInfo) {
 		if err != nil {
 			logger.Errorf("failed to update metric: %v", err)
 		}
+		if resp != nil {
+			resp.Body.Close()
+		}
 		return err != nil
 	})
 	if err != nil {
 		return
-	}
-
-	if resp != nil {
-		resp.Body.Close()
 	}
 }
 
