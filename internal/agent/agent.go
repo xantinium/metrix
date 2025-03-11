@@ -64,14 +64,10 @@ func (agent *MetrixAgent) UpdateMetrics() {
 //
 // Deprecated: метод устарел, следует использовать updateMetricsV2.
 func (agent *MetrixAgent) updateMetrics(metric models.MetricInfo) {
-	resp, err := http.Post(agent.getUpdateMetricHandlerURL(metric), "text/plain", nil)
+	_, err := http.Post(agent.getUpdateMetricHandlerURL(metric), "text/plain", nil)
 
 	if err != nil {
 		logger.Errorf("failed to update metric: %v", err)
-	}
-
-	if resp != nil {
-		resp.Body.Close()
 	}
 }
 
@@ -81,7 +77,6 @@ func (agent *MetrixAgent) updateMetricsV2(metric models.MetricInfo) {
 		err      error
 		httpReq  *http.Request
 		reqBytes []byte
-		resp     *http.Response
 	)
 
 	value := metric.GaugeValue()
@@ -117,14 +112,9 @@ func (agent *MetrixAgent) updateMetricsV2(metric models.MetricInfo) {
 	httpReq.Header.Set("Content-Encoding", "gzip")
 	httpReq.Header.Set("Content-Type", "application/json")
 
-	resp, err = http.DefaultClient.Do(httpReq)
+	_, err = http.DefaultClient.Do(httpReq)
 	if err != nil {
 		logger.Errorf("failed to update metric: %v", err)
-		return
-	}
-
-	if resp != nil {
-		resp.Body.Close()
 	}
 }
 
@@ -134,7 +124,6 @@ func (agent *MetrixAgent) updateMetricsBatch(metrics []models.MetricInfo) {
 		err      error
 		httpReq  *http.Request
 		reqBytes []byte
-		resp     *http.Response
 	)
 
 	req := make(MetricsBatch, len(metrics))
@@ -174,18 +163,13 @@ func (agent *MetrixAgent) updateMetricsBatch(metrics []models.MetricInfo) {
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	agent.retrier.Exec(func() bool {
-		resp, err = http.DefaultClient.Do(httpReq)
+		_, err = http.DefaultClient.Do(httpReq)
 		if err != nil {
 			logger.Errorf("failed to update metric: %v", err)
+			return true
 		}
-		if resp != nil {
-			resp.Body.Close()
-		}
-		return err != nil
+		return false
 	})
-	if err != nil {
-		return
-	}
 }
 
 // getHandlerUrl создаёт URL-адрес для запроса на обновление метрик.
