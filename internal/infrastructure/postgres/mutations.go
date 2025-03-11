@@ -59,7 +59,7 @@ func (client *PostgresClient) UpdateCounterMetric(ctx context.Context, id string
 			" counter_value = metrics.counter_value + $3"+
 			" RETURNING counter_value;",
 			id,
-			serializeMetricType(models.Gauge),
+			serializeMetricType(models.Counter),
 			value)
 
 		err = row.Scan(&newValue)
