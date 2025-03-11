@@ -20,7 +20,6 @@ type MetrixAgentOptions struct {
 	ServerAddr     string
 	PollInterval   int
 	ReportInterval time.Duration
-	UsingV2        bool
 }
 
 // NewMetrixAgent создаёт новый агент метрик.
@@ -28,7 +27,6 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 	agent := &MetrixAgent{
 		serverAddr:    opts.ServerAddr,
 		metricsSource: runtimemetrics.NewRuntimeMetricsSource(opts.PollInterval),
-		usingV2:       opts.UsingV2,
 	}
 
 	agent.worker = newMetrixAgentWorker(opts.ReportInterval, agent.UpdateMetrics)
@@ -41,7 +39,6 @@ type MetrixAgent struct {
 	serverAddr    string
 	worker        *metrixAgentWorker
 	metricsSource *runtimemetrics.RuntimeMetricsSource
-	usingV2       bool
 }
 
 // Run запускает агента метрик.
@@ -58,17 +55,12 @@ func (agent *MetrixAgent) Stop() {
 
 // UpdateMetrics обновляет метрики на сервере.
 func (agent *MetrixAgent) UpdateMetrics() {
-	metrics := agent.metricsSource.GetSnapshot()
-
-	for _, metric := range metrics {
-		if agent.usingV2 {
-			agent.updateMetricsV2(metric)
-		} else {
-			agent.updateMetrics(metric)
-		}
-	}
+	agent.updateMetricsBatch(agent.metricsSource.GetSnapshot())
 }
 
+// updateMetrics обновление метрики через хендлеры первой версии.
+//
+// Deprecated: метод устарел, следует использовать updateMetricsV2.
 func (agent *MetrixAgent) updateMetrics(metric models.MetricInfo) {
 	resp, err := http.Post(agent.getUpdateMetricHandlerURL(metric), "text/plain", nil)
 
@@ -81,6 +73,7 @@ func (agent *MetrixAgent) updateMetrics(metric models.MetricInfo) {
 	}
 }
 
+// updateMetricsV2 обновление метрики через хендлеры второй версии.
 func (agent *MetrixAgent) updateMetricsV2(metric models.MetricInfo) {
 	var (
 		err      error
@@ -97,6 +90,62 @@ func (agent *MetrixAgent) updateMetricsV2(metric models.MetricInfo) {
 		MType: string(metric.Type()),
 		Delta: &delta,
 		Value: &value,
+	}
+
+	reqBytes, err = easyjson.Marshal(req)
+	if err != nil {
+		logger.Errorf("failed to update metric: %v", err)
+		return
+	}
+
+	reqBytes, err = tools.Compress(reqBytes)
+	if err != nil {
+		logger.Errorf("failed to update metric: %v", err)
+		return
+	}
+
+	reqBody := bytes.NewBuffer(reqBytes)
+	httpReq, err = http.NewRequest(http.MethodPost, agent.getUpdateMetricV2HandlerURL(), reqBody)
+	if err != nil {
+		logger.Errorf("failed to update metric: %v", err)
+		return
+	}
+
+	httpReq.Header.Set("Accept-Encoding", "gzip")
+	httpReq.Header.Set("Content-Encoding", "gzip")
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err = http.DefaultClient.Do(httpReq)
+	if err != nil {
+		logger.Errorf("failed to update metric: %v", err)
+		return
+	}
+
+	if resp != nil {
+		resp.Body.Close()
+	}
+}
+
+// updateMetricsBatch массововое обновление метрик через хендлеры второй версии.
+func (agent *MetrixAgent) updateMetricsBatch(metrics []models.MetricInfo) {
+	var (
+		err      error
+		httpReq  *http.Request
+		reqBytes []byte
+		resp     *http.Response
+	)
+
+	req := make(MetricsBatch, len(metrics))
+	for i, metric := range metrics {
+		value := metric.GaugeValue()
+		delta := metric.CounterValue()
+
+		req[i] = Metrics{
+			ID:    metric.ID(),
+			MType: string(metric.Type()),
+			Delta: &delta,
+			Value: &value,
+		}
 	}
 
 	reqBytes, err = easyjson.Marshal(req)
@@ -160,3 +209,6 @@ type Metrics struct {
 	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
+
+//easyjson:json
+type MetricsBatch []Metrics
