@@ -27,6 +27,7 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 	agent := &MetrixAgent{
 		serverAddr:    opts.ServerAddr,
 		metricsSource: runtimemetrics.NewRuntimeMetricsSource(opts.PollInterval),
+		retrier:       tools.DefaulRetrier,
 	}
 
 	agent.worker = newMetrixAgentWorker(opts.ReportInterval, agent.UpdateMetrics)
@@ -39,6 +40,7 @@ type MetrixAgent struct {
 	serverAddr    string
 	worker        *metrixAgentWorker
 	metricsSource *runtimemetrics.RuntimeMetricsSource
+	retrier       *tools.Retrier
 }
 
 // Run запускает агента метрик.
@@ -171,9 +173,14 @@ func (agent *MetrixAgent) updateMetricsBatch(metrics []models.MetricInfo) {
 	httpReq.Header.Set("Content-Encoding", "gzip")
 	httpReq.Header.Set("Content-Type", "application/json")
 
-	resp, err = http.DefaultClient.Do(httpReq)
+	agent.retrier.Exec(func() bool {
+		resp, err = http.DefaultClient.Do(httpReq)
+		if err != nil {
+			logger.Errorf("failed to update metric: %v", err)
+		}
+		return err != nil
+	})
 	if err != nil {
-		logger.Errorf("failed to update metric: %v", err)
 		return
 	}
 
