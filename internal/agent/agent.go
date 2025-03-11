@@ -130,7 +130,6 @@ func (agent *MetrixAgent) updateMetricsBatch(metrics []models.MetricInfo) {
 		err      error
 		httpReq  *http.Request
 		reqBytes []byte
-		resp     *http.Response
 	)
 
 	req := make(MetricsBatch, len(metrics))
@@ -170,6 +169,7 @@ func (agent *MetrixAgent) updateMetricsBatch(metrics []models.MetricInfo) {
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	agent.retrier.Exec(func() bool {
+		var resp *http.Response
 		resp, err = http.DefaultClient.Do(httpReq)
 		if err != nil {
 			logger.Errorf("failed to update metric: %v", err)
