@@ -58,7 +58,7 @@ func (client *PostgresClient) Destroy(_ context.Context) {
 }
 
 func convertError(err error) error {
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return models.ErrNotFound
 	}
 
