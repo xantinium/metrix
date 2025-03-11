@@ -1,6 +1,11 @@
 package memstorage
 
-import "context"
+import (
+	"context"
+
+	"github.com/xantinium/metrix/internal/logger"
+	"github.com/xantinium/metrix/internal/models"
+)
 
 // UpdateGaugeMetric обновляет текущее значение метрики типа Gauge
 // с идентификатором id, перезаписывая его значением value.
@@ -26,4 +31,23 @@ func (storage *MemStorage) UpdateCounterMetric(_ context.Context, id string, val
 	storage.counterMetrics[id] += value
 
 	return storage.counterMetrics[id], nil
+}
+
+// UpdateMetrics обновляет текущее значение метрик.
+func (storage *MemStorage) UpdateMetrics(_ context.Context, metric []models.MetricInfo) error {
+	storage.mx.Lock()
+	defer storage.mx.Unlock()
+
+	for _, metric := range metric {
+		switch metric.Type() {
+		case models.Gauge:
+			storage.gaugeMetrics[metric.ID()] = metric.GaugeValue()
+		case models.Counter:
+			storage.counterMetrics[metric.ID()] += metric.CounterValue()
+		default:
+			logger.Info("unknown metric type", logger.Field{Name: "type", Value: metric.Type()})
+		}
+	}
+
+	return nil
 }

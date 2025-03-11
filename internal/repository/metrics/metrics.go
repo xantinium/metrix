@@ -66,6 +66,12 @@ func (repo *MetricsRepository) UpdateCounterMetric(ctx context.Context, id strin
 	return updatedValue, nil
 }
 
+// UpdateMetrics обновляет текущее значение метрик,
+// переданных в слайсе metrics.
+func (repo *MetricsRepository) UpdateMetrics(ctx context.Context, metrics []models.MetricInfo) error {
+	return repo.storage.UpdateMetrics(ctx, metrics)
+}
+
 // GetAllMetrics возвращает все существующие метрики.
 func (repo *MetricsRepository) GetAllMetrics(ctx context.Context) ([]models.MetricInfo, error) {
 	metrics, err := repo.storage.GetAllMetrics(ctx)

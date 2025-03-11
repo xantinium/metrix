@@ -14,6 +14,9 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
+//easyjson:json
+type MetricsBatch []Metrics
+
 // parseType парсит тип метрики.
 func parseType(maybeMetricType string) (models.MetricType, error) {
 	switch maybeMetricType {
