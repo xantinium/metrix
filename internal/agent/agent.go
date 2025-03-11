@@ -161,7 +161,7 @@ func (agent *MetrixAgent) updateMetricsBatch(metrics []models.MetricInfo) {
 	}
 
 	reqBody := bytes.NewBuffer(reqBytes)
-	httpReq, err = http.NewRequest(http.MethodPost, agent.getUpdateMetricV2HandlerURL(), reqBody)
+	httpReq, err = http.NewRequest(http.MethodPost, agent.getUpdateMetricBatchHandlerURL(), reqBody)
 	if err != nil {
 		logger.Errorf("failed to update metric: %v", err)
 		return
@@ -200,6 +200,11 @@ func (agent MetrixAgent) getUpdateMetricHandlerURL(metric models.MetricInfo) str
 // getUpdateMetricV2HandlerURL создаёт URL-адрес для запроса на обновление метрик в JSON формате.
 func (agent MetrixAgent) getUpdateMetricV2HandlerURL() string {
 	return fmt.Sprintf("http://%s/update", agent.serverAddr)
+}
+
+// getUpdateMetricBatchHandlerURL создаёт URL-адрес для запроса на массовое обновление метрик в JSON формате.
+func (agent MetrixAgent) getUpdateMetricBatchHandlerURL() string {
+	return fmt.Sprintf("http://%s/updates", agent.serverAddr)
 }
 
 //easyjson:json
