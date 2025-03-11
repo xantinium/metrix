@@ -25,7 +25,7 @@ func (client *PostgresClient) GetGaugeMetric(ctx context.Context, id string) (fl
 // GetCounterMetric возвращает метрику типа Counter по идентификатору id.
 func (client *PostgresClient) GetCounterMetric(ctx context.Context, id string) (int64, error) {
 	row := client.db.QueryRowContext(ctx, "SELECT counter_value FROM metrics"+
-		" WHERE id = $1 AND type = $12;",
+		" WHERE id = $1 AND type = $2;",
 		id,
 		serializeMetricType(models.Gauge))
 
