@@ -1,6 +1,7 @@
 package v2handlers
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,17 +25,17 @@ func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.Mars
 
 	switch req.MetricType {
 	case models.Gauge:
-		return getGaugeMetricHandler(metricsRepo, req.MetricName)
+		return getGaugeMetricHandler(ctx, metricsRepo, req.MetricID)
 	case models.Counter:
-		return getCounterMetricHandler(metricsRepo, req.MetricName)
+		return getCounterMetricHandler(ctx, metricsRepo, req.MetricID)
 	default:
 		// Попасть сюда невозможно, из-за валидации запроса.
 		return http.StatusInternalServerError, nil, fmt.Errorf("unknown metric type")
 	}
 }
 
-func getGaugeMetricHandler(repo *metrics.MetricsRepository, name string) (int, easyjson.Marshaler, error) {
-	value, err := repo.GetGaugeMetric(name)
+func getGaugeMetricHandler(ctx context.Context, repo *metrics.MetricsRepository, id string) (int, easyjson.Marshaler, error) {
+	value, err := repo.GetGaugeMetric(ctx, id)
 	if err != nil {
 		if err == models.ErrNotFound {
 			return http.StatusNotFound, nil, err
@@ -44,14 +45,14 @@ func getGaugeMetricHandler(repo *metrics.MetricsRepository, name string) (int, e
 	}
 
 	return http.StatusOK, Metrics{
-		ID:    name,
+		ID:    id,
 		MType: string(models.Gauge),
 		Value: &value,
 	}, nil
 }
 
-func getCounterMetricHandler(repo *metrics.MetricsRepository, name string) (int, easyjson.Marshaler, error) {
-	value, err := repo.GetCounterMetric(name)
+func getCounterMetricHandler(ctx context.Context, repo *metrics.MetricsRepository, id string) (int, easyjson.Marshaler, error) {
+	value, err := repo.GetCounterMetric(ctx, id)
 	if err != nil {
 		if err == models.ErrNotFound {
 			return http.StatusNotFound, nil, err
@@ -61,14 +62,14 @@ func getCounterMetricHandler(repo *metrics.MetricsRepository, name string) (int,
 	}
 
 	return http.StatusOK, Metrics{
-		ID:    name,
+		ID:    id,
 		MType: string(models.Counter),
 		Delta: &value,
 	}, nil
 }
 
 type GetMetricsRequest struct {
-	MetricName string
+	MetricID   string
 	MetricType models.MetricType
 }
 
@@ -90,8 +91,8 @@ func ParseGetMetricRequest(ctx *gin.Context) (GetMetricsRequest, error) {
 		return GetMetricsRequest{}, err
 	}
 
-	req.MetricName = rawReq.ID
-	if req.MetricName == "" {
+	req.MetricID = rawReq.ID
+	if req.MetricID == "" {
 		return GetMetricsRequest{}, fmt.Errorf("metric id cannot be empty")
 	}
 
