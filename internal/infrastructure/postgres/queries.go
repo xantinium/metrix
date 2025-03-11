@@ -27,7 +27,7 @@ func (client *PostgresClient) GetCounterMetric(ctx context.Context, id string) (
 	row := client.db.QueryRowContext(ctx, "SELECT counter_value FROM metrics"+
 		" WHERE id = $1 AND type = $2;",
 		id,
-		serializeMetricType(models.Gauge))
+		serializeMetricType(models.Counter))
 
 	var counterValue int64
 	err := row.Scan(&counterValue)
