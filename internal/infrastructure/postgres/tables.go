@@ -51,7 +51,7 @@ func (client *PostgresClient) initMetricsTable(ctx context.Context) error {
 		"id VARCHAR(50) NOT NULL,"+
 		"type SMALLINT NOT NULL,"+
 		"gauge_value DOUBLE PRECISION NOT NULL,"+
-		"counter_value INTEGER NOT NULL,"+
+		"counter_value BIGINT NOT NULL,"+
 		"PRIMARY KEY (id, type)"+
 		");")
 
