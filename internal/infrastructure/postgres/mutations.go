@@ -110,7 +110,7 @@ func (client *PostgresClient) updateMetric(ctx context.Context, metric models.Me
 		getOnConflictExpression()+
 		" RETURNING counter_value;",
 		metric.ID(),
-		serializeMetricType(models.Counter),
+		serializeMetricType(metric.Type()),
 		metric.GaugeValue(),
 		metric.CounterValue())
 
