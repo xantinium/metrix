@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mailru/easyjson"
 
+	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/server/interfaces"
 )
 
@@ -23,6 +24,11 @@ func RegisterHandler(server interfaces.Server, method string, pattern string, ha
 	server.GetInternalRouter().Handle(method, pattern, func(ctx *gin.Context) {
 		statusCode, response, err := handler(ctx, server)
 		if err != nil {
+			logger.Error(
+				"error response",
+				logger.Field{Name: "status", Value: statusCode},
+				logger.Field{Name: "error", Value: err.Error()},
+			)
 			ctx.String(statusCode, err.Error())
 			return
 		}
@@ -65,6 +71,11 @@ func RegisterV2Handler(server interfaces.Server, method string, pattern string, 
 
 		statusCode, response, err = handler(ctx, server)
 		if err != nil {
+			logger.Error(
+				"error response",
+				logger.Field{Name: "status", Value: statusCode},
+				logger.Field{Name: "error", Value: err.Error()},
+			)
 			writeJSON(ctx, statusCode, []byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
 			return
 		}
