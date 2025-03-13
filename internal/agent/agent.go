@@ -60,10 +60,10 @@ func (agent *MetrixAgent) UpdateMetrics() {
 	agent.updateMetricsBatch(agent.metricsSource.GetSnapshot())
 }
 
-// updateMetrics обновление метрики через хендлеры первой версии.
+// updateMetric обновление метрики через хендлеры первой версии.
 //
 // Deprecated: метод устарел, следует использовать updateMetricsV2.
-func (agent *MetrixAgent) updateMetrics(metric models.MetricInfo) {
+func (agent *MetrixAgent) updateMetric(metric models.MetricInfo) {
 	resp, err := http.Post(agent.getUpdateMetricHandlerURL(metric), "text/plain", nil)
 	if err != nil {
 		logger.Errorf("failed to update metric: %v", err)
@@ -73,15 +73,8 @@ func (agent *MetrixAgent) updateMetrics(metric models.MetricInfo) {
 	}
 }
 
-// updateMetricsV2 обновление метрики через хендлеры второй версии.
-func (agent *MetrixAgent) updateMetricsV2(metric models.MetricInfo) {
-	var (
-		err      error
-		httpReq  *http.Request
-		reqBytes []byte
-		resp     *http.Response
-	)
-
+// updateMetricV2 обновление метрики через хендлеры второй версии.
+func (agent *MetrixAgent) updateMetricV2(metric models.MetricInfo) {
 	value := metric.GaugeValue()
 	delta := metric.CounterValue()
 
@@ -92,46 +85,14 @@ func (agent *MetrixAgent) updateMetricsV2(metric models.MetricInfo) {
 		Value: &value,
 	}
 
-	reqBytes, err = easyjson.Marshal(req)
+	err := agent.sendV2Request(agent.getUpdateMetricV2HandlerURL(), req)
 	if err != nil {
 		logger.Errorf("failed to update metric: %v", err)
-		return
-	}
-
-	reqBytes, err = tools.Compress(reqBytes)
-	if err != nil {
-		logger.Errorf("failed to update metric: %v", err)
-		return
-	}
-
-	reqBody := bytes.NewBuffer(reqBytes)
-	httpReq, err = http.NewRequest(http.MethodPost, agent.getUpdateMetricV2HandlerURL(), reqBody)
-	if err != nil {
-		logger.Errorf("failed to update metric: %v", err)
-		return
-	}
-
-	httpReq.Header.Set("Accept-Encoding", "gzip")
-	httpReq.Header.Set("Content-Encoding", "gzip")
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	resp, err = http.DefaultClient.Do(httpReq)
-	if err != nil {
-		logger.Errorf("failed to update metric: %v", err)
-	}
-	if resp != nil {
-		resp.Body.Close()
 	}
 }
 
 // updateMetricsBatch массововое обновление метрик через хендлеры второй версии.
 func (agent *MetrixAgent) updateMetricsBatch(metrics []models.MetricInfo) {
-	var (
-		err      error
-		httpReq  *http.Request
-		reqBytes []byte
-	)
-
 	req := make(MetricsBatch, len(metrics))
 	for i, metric := range metrics {
 		value := metric.GaugeValue()
@@ -145,23 +106,33 @@ func (agent *MetrixAgent) updateMetricsBatch(metrics []models.MetricInfo) {
 		}
 	}
 
+	err := agent.sendV2Request(agent.getUpdateMetricBatchHandlerURL(), req)
+	if err != nil {
+		logger.Errorf("failed to batch update metrics: %v", err)
+	}
+}
+
+func (agent *MetrixAgent) sendV2Request(url string, req easyjson.Marshaler) error {
+	var (
+		err      error
+		httpReq  *http.Request
+		reqBytes []byte
+	)
+
 	reqBytes, err = easyjson.Marshal(req)
 	if err != nil {
-		logger.Errorf("failed to update metric: %v", err)
-		return
+		return err
 	}
 
 	reqBytes, err = tools.Compress(reqBytes)
 	if err != nil {
-		logger.Errorf("failed to update metric: %v", err)
-		return
+		return err
 	}
 
 	reqBody := bytes.NewBuffer(reqBytes)
-	httpReq, err = http.NewRequest(http.MethodPost, agent.getUpdateMetricBatchHandlerURL(), reqBody)
+	httpReq, err = http.NewRequest(http.MethodPost, url, reqBody)
 	if err != nil {
-		logger.Errorf("failed to update metric: %v", err)
-		return
+		return err
 	}
 
 	httpReq.Header.Set("Accept-Encoding", "gzip")
@@ -171,14 +142,13 @@ func (agent *MetrixAgent) updateMetricsBatch(metrics []models.MetricInfo) {
 	agent.retrier.Exec(func() bool {
 		var resp *http.Response
 		resp, err = http.DefaultClient.Do(httpReq)
-		if err != nil {
-			logger.Errorf("failed to update metric: %v", err)
-		}
 		if resp != nil {
 			resp.Body.Close()
 		}
 		return err != nil
 	})
+
+	return err
 }
 
 // getHandlerUrl создаёт URL-адрес для запроса на обновление метрик.
