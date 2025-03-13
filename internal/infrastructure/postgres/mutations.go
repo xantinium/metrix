@@ -19,26 +19,16 @@ func (client *PostgresClient) SaveMetrics(ctx context.Context) error {
 // Возвращает обновлённое значение метрики.
 func (client *PostgresClient) UpdateGaugeMetric(ctx context.Context, id string, value float64) (float64, error) {
 	var (
-		err      error
-		newValue float64
+		err    error
+		metric models.MetricInfo
 	)
 
 	client.retrier.Exec(func() bool {
-		row := client.db.QueryRowContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
-			" VALUES ($1, $2, $3, 0)"+
-			" ON CONFLICT (id, type)"+
-			" DO UPDATE SET"+
-			" gauge_value = $3"+
-			" RETURNING gauge_value;",
-			id,
-			serializeMetricType(models.Gauge),
-			value)
-
-		err = row.Scan(&newValue)
+		metric, err = client.updateMetric(ctx, models.NewGaugeMetric(id, value))
 		return shouldRetry(err)
 	})
 
-	return newValue, convertError(err)
+	return metric.GaugeValue(), err
 }
 
 // UpdateCounterMetric обновляет текущее значение метрики типа Counter
@@ -47,26 +37,16 @@ func (client *PostgresClient) UpdateGaugeMetric(ctx context.Context, id string, 
 // Возвращает обновлённое значение метрики.
 func (client *PostgresClient) UpdateCounterMetric(ctx context.Context, id string, value int64) (int64, error) {
 	var (
-		err      error
-		newValue int64
+		err    error
+		metric models.MetricInfo
 	)
 
 	client.retrier.Exec(func() bool {
-		row := client.db.QueryRowContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
-			" VALUES ($1, $2, 0, $3)"+
-			" ON CONFLICT (id, type)"+
-			" DO UPDATE SET"+
-			" counter_value = metrics.counter_value + $3"+
-			" RETURNING counter_value;",
-			id,
-			serializeMetricType(models.Counter),
-			value)
-
-		err = row.Scan(&newValue)
+		metric, err = client.updateMetric(ctx, models.NewCounterMetric(id, value))
 		return shouldRetry(err)
 	})
 
-	return newValue, convertError(err)
+	return metric.CounterValue(), err
 }
 
 // UpdateMetrics обновляет текущее значение метрик.
@@ -88,28 +68,7 @@ func (client *PostgresClient) UpdateMetrics(ctx context.Context, metrics []model
 		}
 
 		for _, metric := range metrics {
-			switch metric.Type() {
-			case models.Gauge:
-				_, err = tx.ExecContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
-					" VALUES ($1, $2, $3, 0)"+
-					" ON CONFLICT (id, type)"+
-					" DO UPDATE SET"+
-					" gauge_value = $3;",
-					metric.ID(),
-					serializeMetricType(models.Gauge),
-					metric.GaugeValue())
-			case models.Counter:
-				_, err = tx.ExecContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
-					" VALUES ($1, $2, 0, $3)"+
-					" ON CONFLICT (id, type)"+
-					" DO UPDATE SET"+
-					" counter_value = metrics.counter_value + $3;",
-					metric.ID(),
-					serializeMetricType(models.Counter),
-					metric.CounterValue())
-			default:
-				logger.Info("unknown metric type", logger.Field{Name: "type", Value: metric.Type()})
-			}
+			_, err = client.updateMetric(ctx, metric)
 			if err != nil {
 				tx.Rollback()
 				return shouldRetry(err)
@@ -121,4 +80,66 @@ func (client *PostgresClient) UpdateMetrics(ctx context.Context, metrics []model
 	})
 
 	return convertError(err)
+}
+
+// updateMetric обновляет текущее значение метрики с идентификатором id.
+//
+// Возвращает обновлённую структуру метрики.
+func (client *PostgresClient) updateMetric(ctx context.Context, metric models.MetricInfo) (models.MetricInfo, error) {
+	var (
+		err       error
+		newMetric models.MetricInfo
+	)
+
+	getOnConflictExpression := func() string {
+		expression := "DO NOTHING"
+
+		switch metric.Type() {
+		case models.Gauge:
+			expression = " DO UPDATE SET gauge_value = $3"
+		case models.Counter:
+			expression = " DO UPDATE SET counter_value = metrics.counter_value + $4"
+		}
+
+		return expression
+	}
+
+	getValue := func() any {
+		switch metric.Type() {
+		case models.Gauge:
+			return metric.GaugeValue()
+		case models.Counter:
+			return metric.CounterValue()
+		default:
+			return 0
+		}
+	}
+
+	client.retrier.Exec(func() bool {
+		row := client.db.QueryRowContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
+			" VALUES ($1, $2, $3, $4)"+
+			" ON CONFLICT (id, type)"+
+			getOnConflictExpression()+
+			" RETURNING counter_value;",
+			metric.ID(),
+			serializeMetricType(models.Counter),
+			getValue())
+
+		switch metric.Type() {
+		case models.Gauge:
+			var newValue float64
+			err = row.Scan(&newValue)
+			newMetric = models.NewGaugeMetric(metric.ID(), newValue)
+		case models.Counter:
+			var newValue int64
+			err = row.Scan(&newValue)
+			newMetric = models.NewCounterMetric(metric.ID(), newValue)
+		default:
+			logger.Info("unknown metric type", logger.Field{Name: "type", Value: metric.Type()})
+		}
+
+		return shouldRetry(err)
+	})
+
+	return newMetric, convertError(err)
 }
