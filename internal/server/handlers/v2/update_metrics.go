@@ -1,7 +1,6 @@
 package v2handlers
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 
@@ -51,38 +50,9 @@ func ParseUpdateMetricsRequest(ctx *gin.Context) (UpdateMetricsRequest, error) {
 
 	req.Metrics = make([]models.MetricInfo, len(rawReq))
 	for i, metric := range rawReq {
-		var (
-			metricID   string
-			metricType models.MetricType
-			metricInfo models.MetricInfo
-		)
+		var metricInfo models.MetricInfo
 
-		metricID = metric.ID
-		if metricID == "" {
-			return UpdateMetricsRequest{}, fmt.Errorf("metric id cannot be empty")
-		}
-
-		metricType, err = parseType(metric.MType)
-		if err != nil {
-			return UpdateMetricsRequest{}, err
-		}
-
-		switch metricType {
-		case models.Gauge:
-			if metric.Value == nil {
-				err = fmt.Errorf("value is missing")
-			} else {
-				metricInfo = models.NewGaugeMetric(metricID, *metric.Value)
-			}
-		case models.Counter:
-			if metric.Delta == nil {
-				err = fmt.Errorf("value is missing")
-			} else {
-				metricInfo = models.NewCounterMetric(metricID, *metric.Delta)
-			}
-		default:
-			err = fmt.Errorf("unknown metric type: %q", metricType)
-		}
+		metricInfo, err = parseMetric(metric)
 		if err != nil {
 			return UpdateMetricsRequest{}, err
 		}

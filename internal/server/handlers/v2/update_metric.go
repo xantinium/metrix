@@ -1,7 +1,6 @@
 package v2handlers
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 
@@ -25,18 +24,18 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 	}
 
 	resp := Metrics{
-		ID:    req.MetricID,
-		MType: string(req.MetricType),
+		ID:    req.Metric.ID(),
+		MType: string(req.Metric.Type()),
 	}
 
 	metricsRepo := s.GetMetricsRepo()
 
-	switch req.MetricType {
+	switch req.Metric.Type() {
 	case models.Gauge:
-		updatedGaugeValue, err = metricsRepo.UpdateGaugeMetric(ctx, req.MetricID, req.GaugeValue)
+		updatedGaugeValue, err = metricsRepo.UpdateGaugeMetric(ctx, req.Metric.ID(), req.Metric.GaugeValue())
 		resp.Value = &updatedGaugeValue
 	case models.Counter:
-		updatedCounterValue, err = metricsRepo.UpdateCounterMetric(ctx, req.MetricID, req.CounterValue)
+		updatedCounterValue, err = metricsRepo.UpdateCounterMetric(ctx, req.Metric.ID(), req.Metric.CounterValue())
 		resp.Delta = &updatedCounterValue
 	}
 
@@ -48,10 +47,7 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 }
 
 type UpdateMetricRequest struct {
-	MetricID     string
-	MetricType   models.MetricType
-	GaugeValue   float64
-	CounterValue int64
+	Metric models.MetricInfo
 }
 
 func ParseUpdateMetricRequest(ctx *gin.Context) (UpdateMetricRequest, error) {
@@ -72,30 +68,9 @@ func ParseUpdateMetricRequest(ctx *gin.Context) (UpdateMetricRequest, error) {
 		return UpdateMetricRequest{}, err
 	}
 
-	req.MetricID = rawReq.ID
-	if req.MetricID == "" {
-		return UpdateMetricRequest{}, fmt.Errorf("metric id cannot be empty")
-	}
-
-	req.MetricType, err = parseType(rawReq.MType)
+	req.Metric, err = parseMetric(rawReq)
 	if err != nil {
 		return UpdateMetricRequest{}, err
-	}
-
-	if req.MetricType == models.Gauge {
-		if rawReq.Value == nil {
-			return UpdateMetricRequest{}, fmt.Errorf("value is missing")
-		} else {
-			req.GaugeValue = *rawReq.Value
-		}
-	}
-
-	if req.MetricType == models.Counter {
-		if rawReq.Delta == nil {
-			return UpdateMetricRequest{}, fmt.Errorf("value is missing")
-		} else {
-			req.CounterValue = *rawReq.Delta
-		}
 	}
 
 	return req, nil
