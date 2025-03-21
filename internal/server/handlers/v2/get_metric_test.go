@@ -22,12 +22,12 @@ func TestParseGetMetricRequest(t *testing.T) {
 		{
 			name:    "Валидный json для типа Gauge",
 			reqBody: `{"id":"Alloc","type":"gauge"}`,
-			want:    v2handlers.GetMetricsRequest{MetricName: "Alloc", MetricType: models.Gauge},
+			want:    v2handlers.GetMetricsRequest{MetricID: "Alloc", MetricType: models.Gauge},
 		},
 		{
 			name:    "Валидный json для типа Counter",
 			reqBody: `{"id":"PollCount","type":"counter"}`,
-			want:    v2handlers.GetMetricsRequest{MetricName: "PollCount", MetricType: models.Counter},
+			want:    v2handlers.GetMetricsRequest{MetricID: "PollCount", MetricType: models.Counter},
 		},
 		{
 			name:    "Невалидный json: пустой id",

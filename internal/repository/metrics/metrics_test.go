@@ -1,16 +1,19 @@
 package metrics
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/xantinium/metrix/internal/infrastructure/metricsstorage"
+	"github.com/xantinium/metrix/internal/infrastructure/memstorage"
 	"github.com/xantinium/metrix/internal/models"
 )
 
 func TestMetricsRepository_UpdateGaugeMetric(t *testing.T) {
-	storage, err := metricsstorage.NewMetricsStorage("metrix.db", false)
+	ctx := context.Background()
+
+	storage, err := memstorage.NewMemStorage("metrix.db", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -21,32 +24,32 @@ func TestMetricsRepository_UpdateGaugeMetric(t *testing.T) {
 
 	updateOperations := []struct {
 		metricType  models.MetricType
-		metricName  string
+		metricID    string
 		metricValue float64
 	}{
 		{
 			metricType:  models.Gauge,
-			metricName:  "Alloc",
+			metricID:    "Alloc",
 			metricValue: 123.45,
 		},
 		{
 			metricType:  models.Counter,
-			metricName:  "PollCount",
+			metricID:    "PollCount",
 			metricValue: 222,
 		},
 		{
 			metricType:  models.Gauge,
-			metricName:  "RandomValue",
+			metricID:    "RandomValue",
 			metricValue: 78,
 		},
 		{
 			metricType:  models.Gauge,
-			metricName:  "Alloc",
+			metricID:    "Alloc",
 			metricValue: 2.1,
 		},
 		{
 			metricType:  models.Counter,
-			metricName:  "PollCount",
+			metricID:    "PollCount",
 			metricValue: 78,
 		},
 	}
@@ -56,9 +59,9 @@ func TestMetricsRepository_UpdateGaugeMetric(t *testing.T) {
 
 		switch oper.metricType {
 		case models.Gauge:
-			_, err = repo.UpdateGaugeMetric(oper.metricName, oper.metricValue)
+			_, err = repo.UpdateGaugeMetric(ctx, oper.metricID, oper.metricValue)
 		case models.Counter:
-			_, err = repo.UpdateCounterMetric(oper.metricName, int64(oper.metricValue))
+			_, err = repo.UpdateCounterMetric(ctx, oper.metricID, int64(oper.metricValue))
 		}
 
 		require.NoError(t, err)
@@ -69,15 +72,15 @@ func TestMetricsRepository_UpdateGaugeMetric(t *testing.T) {
 		allocValue, randomValue float64
 	)
 
-	allocValue, err = repo.GetGaugeMetric("Alloc")
+	allocValue, err = repo.GetGaugeMetric(ctx, "Alloc")
 	require.NoError(t, err)
 	require.Equal(t, 2.1, allocValue)
 
-	randomValue, err = repo.GetGaugeMetric("RandomValue")
+	randomValue, err = repo.GetGaugeMetric(ctx, "RandomValue")
 	require.NoError(t, err)
 	require.Equal(t, 78.0, randomValue)
 
-	pollCount, err = repo.GetCounterMetric("PollCount")
+	pollCount, err = repo.GetCounterMetric(ctx, "PollCount")
 	require.NoError(t, err)
 	require.Equal(t, int64(300), pollCount)
 }

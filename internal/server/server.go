@@ -57,8 +57,8 @@ func NewMetrixServer(opts MetrixServerOptions) *MetrixServer {
 	}
 
 	handlers.RegisterHTMLHandler(internalServer, "/", handlers.GetAllMetricHandler)
-	handlers.RegisterHandler(internalServer, http.MethodGet, "/value/:type/:name", handlers.GetMetricHandler)
-	handlers.RegisterHandler(internalServer, http.MethodPost, "/update/:type/:name/:value", handlers.UpdateMetricHandler)
+	handlers.RegisterHandler(internalServer, http.MethodGet, "/value/:type/:id", handlers.GetMetricHandler)
+	handlers.RegisterHandler(internalServer, http.MethodPost, "/update/:type/:id/:value", handlers.UpdateMetricHandler)
 	handlers.RegisterHandler(internalServer, http.MethodGet, "/ping", handlers.PingHandler)
 	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/value", v2handlers.GetMetricHandler)
 	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/update", v2handlers.UpdateMetricHandler)

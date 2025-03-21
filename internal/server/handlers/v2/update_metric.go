@@ -25,7 +25,7 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 	}
 
 	resp := Metrics{
-		ID:    req.MetricName,
+		ID:    req.MetricID,
 		MType: string(req.MetricType),
 	}
 
@@ -33,10 +33,10 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 
 	switch req.MetricType {
 	case models.Gauge:
-		updatedGaugeValue, err = metricsRepo.UpdateGaugeMetric(req.MetricName, req.GaugeValue)
+		updatedGaugeValue, err = metricsRepo.UpdateGaugeMetric(ctx, req.MetricID, req.GaugeValue)
 		resp.Value = &updatedGaugeValue
 	case models.Counter:
-		updatedCounterValue, err = metricsRepo.UpdateCounterMetric(req.MetricName, req.CounterValue)
+		updatedCounterValue, err = metricsRepo.UpdateCounterMetric(ctx, req.MetricID, req.CounterValue)
 		resp.Delta = &updatedCounterValue
 	}
 
@@ -48,7 +48,7 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 }
 
 type UpdateMetricRequest struct {
-	MetricName   string
+	MetricID     string
 	MetricType   models.MetricType
 	GaugeValue   float64
 	CounterValue int64
@@ -72,8 +72,8 @@ func ParseUpdateMetricRequest(ctx *gin.Context) (UpdateMetricRequest, error) {
 		return UpdateMetricRequest{}, err
 	}
 
-	req.MetricName = rawReq.ID
-	if req.MetricName == "" {
+	req.MetricID = rawReq.ID
+	if req.MetricID == "" {
 		return UpdateMetricRequest{}, fmt.Errorf("metric id cannot be empty")
 	}
 

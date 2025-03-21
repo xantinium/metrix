@@ -8,14 +8,16 @@ import (
 
 // MetricsStorage интерфейс хранилища метрик.
 type MetricsStorage interface {
-	GetGaugeMetric(name string) (float64, error)
-	GetCounterMetric(name string) (int64, error)
-	GetAllMetrics() ([]models.MetricInfo, error)
-	UpdateGaugeMetric(name string, value float64) (float64, error)
-	UpdateCounterMetric(name string, value int64) (int64, error)
-	SaveMetrics() error
+	Destroy(ctx context.Context)
+	GetGaugeMetric(ctx context.Context, id string) (float64, error)
+	GetCounterMetric(ctx context.Context, id string) (int64, error)
+	GetAllMetrics(ctx context.Context) ([]models.MetricInfo, error)
+	UpdateGaugeMetric(ctx context.Context, id string, value float64) (float64, error)
+	UpdateCounterMetric(ctx context.Context, id string, value int64) (int64, error)
+	SaveMetrics(ctx context.Context) error
 }
 
+// DatabaseChecker интерфейс для проверки соединения с БД.
 type DatabaseChecker interface {
-	CheckDatabase(ctx context.Context) error
+	Ping(ctx context.Context) error
 }

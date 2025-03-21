@@ -8,7 +8,7 @@ import (
 )
 
 type MetricsSaver interface {
-	SaveMetrics() error
+	SaveMetrics(ctx context.Context) error
 }
 
 // newMetrixServerWorker создаёт новый воркер для сервера метрик.
@@ -58,7 +58,7 @@ func (worker *metrixServerWorker) Run() {
 					t.Stop()
 					return
 				case <-t.C:
-					err := worker.metricsSaver.SaveMetrics()
+					err := worker.metricsSaver.SaveMetrics(ctx)
 					if err != nil {
 						worker.Log("failed to save metrics")
 					}
