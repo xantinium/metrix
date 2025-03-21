@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 
+	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/models"
 )
 
@@ -57,4 +58,48 @@ func (client *PostgresClient) UpdateCounterMetric(ctx context.Context, id string
 	}
 
 	return counterValue, nil
+}
+
+// UpdateMetrics обновляет текущее значение метрик.
+// Используется батчевое обновление через транзакцию.
+func (client *PostgresClient) UpdateMetrics(ctx context.Context, metrics []models.MetricInfo) error {
+	if len(metrics) == 0 {
+		return nil
+	}
+
+	tx, err := client.db.BeginTx(ctx, nil)
+	if err != nil {
+		return convertError(err)
+	}
+
+	for _, metric := range metrics {
+		switch metric.Type() {
+		case models.Gauge:
+			_, err = tx.ExecContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
+				" VALUES ($1, $2, $3, 0)"+
+				" ON CONFLICT (id, type)"+
+				" DO UPDATE SET"+
+				" gauge_value = $3;",
+				metric.ID(),
+				serializeMetricType(models.Gauge),
+				metric.GaugeValue())
+		case models.Counter:
+			_, err = tx.ExecContext(ctx, "INSERT INTO metrics (id, type, gauge_value, counter_value)"+
+				" VALUES ($1, $2, 0, $3)"+
+				" ON CONFLICT (id, type)"+
+				" DO UPDATE SET"+
+				" counter_value = metrics.counter_value + $3;",
+				metric.ID(),
+				serializeMetricType(models.Counter),
+				metric.CounterValue())
+		default:
+			logger.Info("unknown metric type", logger.Field{Name: "type", Value: metric.Type()})
+		}
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit()
 }

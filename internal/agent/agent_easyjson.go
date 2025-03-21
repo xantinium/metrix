@@ -17,7 +17,73 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjsonCb9d4455DecodeGithubComXantiniumMetrixInternalAgent(in *jlexer.Lexer, out *Metrics) {
+func easyjsonCb9d4455DecodeGithubComXantiniumMetrixInternalAgent(in *jlexer.Lexer, out *MetricsBatch) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		in.Skip()
+		*out = nil
+	} else {
+		in.Delim('[')
+		if *out == nil {
+			if !in.IsDelim(']') {
+				*out = make(MetricsBatch, 0, 1)
+			} else {
+				*out = MetricsBatch{}
+			}
+		} else {
+			*out = (*out)[:0]
+		}
+		for !in.IsDelim(']') {
+			var v1 Metrics
+			(v1).UnmarshalEasyJSON(in)
+			*out = append(*out, v1)
+			in.WantComma()
+		}
+		in.Delim(']')
+	}
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonCb9d4455EncodeGithubComXantiniumMetrixInternalAgent(out *jwriter.Writer, in MetricsBatch) {
+	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		out.RawString("null")
+	} else {
+		out.RawByte('[')
+		for v2, v3 := range in {
+			if v2 > 0 {
+				out.RawByte(',')
+			}
+			(v3).MarshalEasyJSON(out)
+		}
+		out.RawByte(']')
+	}
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v MetricsBatch) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonCb9d4455EncodeGithubComXantiniumMetrixInternalAgent(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v MetricsBatch) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonCb9d4455EncodeGithubComXantiniumMetrixInternalAgent(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *MetricsBatch) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonCb9d4455DecodeGithubComXantiniumMetrixInternalAgent(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *MetricsBatch) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonCb9d4455DecodeGithubComXantiniumMetrixInternalAgent(l, v)
+}
+func easyjsonCb9d4455DecodeGithubComXantiniumMetrixInternalAgent1(in *jlexer.Lexer, out *Metrics) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -70,7 +136,7 @@ func easyjsonCb9d4455DecodeGithubComXantiniumMetrixInternalAgent(in *jlexer.Lexe
 		in.Consumed()
 	}
 }
-func easyjsonCb9d4455EncodeGithubComXantiniumMetrixInternalAgent(out *jwriter.Writer, in Metrics) {
+func easyjsonCb9d4455EncodeGithubComXantiniumMetrixInternalAgent1(out *jwriter.Writer, in Metrics) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -100,23 +166,23 @@ func easyjsonCb9d4455EncodeGithubComXantiniumMetrixInternalAgent(out *jwriter.Wr
 // MarshalJSON supports json.Marshaler interface
 func (v Metrics) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonCb9d4455EncodeGithubComXantiniumMetrixInternalAgent(&w, v)
+	easyjsonCb9d4455EncodeGithubComXantiniumMetrixInternalAgent1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Metrics) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonCb9d4455EncodeGithubComXantiniumMetrixInternalAgent(w, v)
+	easyjsonCb9d4455EncodeGithubComXantiniumMetrixInternalAgent1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Metrics) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonCb9d4455DecodeGithubComXantiniumMetrixInternalAgent(&r, v)
+	easyjsonCb9d4455DecodeGithubComXantiniumMetrixInternalAgent1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Metrics) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonCb9d4455DecodeGithubComXantiniumMetrixInternalAgent(l, v)
+	easyjsonCb9d4455DecodeGithubComXantiniumMetrixInternalAgent1(l, v)
 }

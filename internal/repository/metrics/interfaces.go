@@ -14,6 +14,7 @@ type MetricsStorage interface {
 	GetAllMetrics(ctx context.Context) ([]models.MetricInfo, error)
 	UpdateGaugeMetric(ctx context.Context, id string, value float64) (float64, error)
 	UpdateCounterMetric(ctx context.Context, id string, value int64) (int64, error)
+	UpdateMetrics(ctx context.Context, metrics []models.MetricInfo) error
 	SaveMetrics(ctx context.Context) error
 }
 
