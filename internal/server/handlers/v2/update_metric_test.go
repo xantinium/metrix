@@ -22,12 +22,12 @@ func TestParseUpdateMetricRequest(t *testing.T) {
 		{
 			name:    "Валидный json c типом Gauge",
 			reqBody: `{"id":"Alloc","type":"gauge","value":10.5}`,
-			want:    v2handlers.UpdateMetricRequest{MetricID: "Alloc", MetricType: models.Gauge, GaugeValue: 10.5},
+			want:    v2handlers.UpdateMetricRequest{Metric: models.NewGaugeMetric("Alloc", 10.5)},
 		},
 		{
 			name:    "Валидный json c типом Counter",
 			reqBody: `{"id":"PollCounter","type":"counter","delta":8}`,
-			want:    v2handlers.UpdateMetricRequest{MetricID: "PollCounter", MetricType: models.Counter, CounterValue: 8},
+			want:    v2handlers.UpdateMetricRequest{Metric: models.NewCounterMetric("PollCounter", 8)},
 		},
 		{
 			name:    "Невалидный json: отсутствует значение",

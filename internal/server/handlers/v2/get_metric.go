@@ -2,6 +2,7 @@ package v2handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -37,7 +38,7 @@ func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.Mars
 func getGaugeMetricHandler(ctx context.Context, repo *metrics.MetricsRepository, id string) (int, easyjson.Marshaler, error) {
 	value, err := repo.GetGaugeMetric(ctx, id)
 	if err != nil {
-		if err == models.ErrNotFound {
+		if errors.Is(err, models.ErrNotFound) {
 			return http.StatusNotFound, nil, err
 		}
 
@@ -54,7 +55,7 @@ func getGaugeMetricHandler(ctx context.Context, repo *metrics.MetricsRepository,
 func getCounterMetricHandler(ctx context.Context, repo *metrics.MetricsRepository, id string) (int, easyjson.Marshaler, error) {
 	value, err := repo.GetCounterMetric(ctx, id)
 	if err != nil {
-		if err == models.ErrNotFound {
+		if errors.Is(err, models.ErrNotFound) {
 			return http.StatusNotFound, nil, err
 		}
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -36,7 +37,7 @@ func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, error
 func getGaugeMetricHandler(ctx context.Context, repo *metrics.MetricsRepository, id string) (int, string, error) {
 	value, err := repo.GetGaugeMetric(ctx, id)
 	if err != nil {
-		if err == models.ErrNotFound {
+		if errors.Is(err, models.ErrNotFound) {
 			return http.StatusNotFound, "", err
 		}
 
@@ -49,7 +50,7 @@ func getGaugeMetricHandler(ctx context.Context, repo *metrics.MetricsRepository,
 func getCounterMetricHandler(ctx context.Context, repo *metrics.MetricsRepository, id string) (int, string, error) {
 	value, err := repo.GetCounterMetric(ctx, id)
 	if err != nil {
-		if err == models.ErrNotFound {
+		if errors.Is(err, models.ErrNotFound) {
 			return http.StatusNotFound, "", err
 		}
 

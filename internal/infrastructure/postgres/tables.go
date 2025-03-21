@@ -47,13 +47,18 @@ func (client *PostgresClient) initTables(ctx context.Context) error {
 }
 
 func (client *PostgresClient) initMetricsTable(ctx context.Context) error {
-	_, err := client.db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS metrics ("+
-		"id VARCHAR(50) NOT NULL,"+
-		"type SMALLINT NOT NULL,"+
-		"gauge_value DOUBLE PRECISION NOT NULL,"+
-		"counter_value BIGINT NOT NULL,"+
-		"PRIMARY KEY (id, type)"+
-		");")
+	var err error
 
-	return err
+	client.retrier.Exec(func() bool {
+		_, err = client.db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS metrics ("+
+			"id VARCHAR(50) NOT NULL,"+
+			"type SMALLINT NOT NULL,"+
+			"gauge_value DOUBLE PRECISION NOT NULL,"+
+			"counter_value BIGINT NOT NULL,"+
+			"PRIMARY KEY (id, type)"+
+			");")
+		return shouldRetry(err)
+	})
+
+	return convertError(err)
 }
