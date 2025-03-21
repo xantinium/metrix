@@ -15,11 +15,12 @@ import (
 
 // ServerArgs структура, описывающая аргументы сервера.
 type ServerArgs struct {
-	Addr           string
-	IsDev          bool
-	StoreInterval  time.Duration
-	StoragePath    string
-	RestoreStorage bool
+	Addr            string
+	IsDev           bool
+	StoreInterval   time.Duration
+	StoragePath     string
+	RestoreStorage  bool
+	DatabaseConnStr string
 }
 
 // ParseServerArgs парсит агрументы командной строки в ServerArgs.
@@ -30,14 +31,16 @@ func ParseServerArgs() ServerArgs {
 	storeInterval := flag.Int("i", 300, "interval (in seconds) of writing metrics into file")
 	storagePath := flag.String("f", "./metrix.db", "path to file for metrics writing")
 	restoreStorage := flag.Bool("r", true, "read metrics from file on start")
+	databaseConnStr := flag.String("d", "", "connection string for postgresql")
 
 	flag.Parse()
 
 	args := ServerArgs{
-		Addr:           address.String(),
-		IsDev:          *isDev,
-		StoragePath:    *storagePath,
-		RestoreStorage: *restoreStorage,
+		Addr:            address.String(),
+		IsDev:           *isDev,
+		StoragePath:     *storagePath,
+		RestoreStorage:  *restoreStorage,
+		DatabaseConnStr: *databaseConnStr,
 	}
 	if storeInterval != nil {
 		args.StoreInterval = time.Duration(*storeInterval) * time.Second
@@ -57,24 +60,29 @@ func ParseServerArgs() ServerArgs {
 	if envArgs.RestoreStorage.Exists {
 		args.RestoreStorage = envArgs.RestoreStorage.Value
 	}
+	if envArgs.DatabaseConnStr.Exists {
+		args.DatabaseConnStr = envArgs.DatabaseConnStr.Value
+	}
 
 	return args
 }
 
 type serverEnvArgs struct {
-	Addr           tools.StrEnvVar
-	StoreInterval  tools.IntEnvVar
-	StoragePath    tools.StrEnvVar
-	RestoreStorage tools.BoolEnvVar
+	Addr            tools.StrEnvVar
+	StoreInterval   tools.IntEnvVar
+	StoragePath     tools.StrEnvVar
+	RestoreStorage  tools.BoolEnvVar
+	DatabaseConnStr tools.StrEnvVar
 }
 
 // parseServerArgsFromEnv парсит переменные окружения в serverEnvArgs.
 func parseServerArgsFromEnv() serverEnvArgs {
 	return serverEnvArgs{
-		Addr:           tools.GetStrFromEnv("ADDRESS"),
-		StoreInterval:  tools.GetIntFromEnv("STORE_INTERVAL"),
-		StoragePath:    tools.GetStrFromEnv("FILE_STORAGE_PATH"),
-		RestoreStorage: tools.GetBoolFromEnv("RESTORE"),
+		Addr:            tools.GetStrFromEnv("ADDRESS"),
+		StoreInterval:   tools.GetIntFromEnv("STORE_INTERVAL"),
+		StoragePath:     tools.GetStrFromEnv("FILE_STORAGE_PATH"),
+		RestoreStorage:  tools.GetBoolFromEnv("RESTORE"),
+		DatabaseConnStr: tools.GetStrFromEnv("DATABASE_DSN"),
 	}
 }
 
