@@ -96,11 +96,12 @@ func parseServerArgsFromEnv() serverEnvArgs {
 
 // AgentArgs структура, описывающая аргументы агента.
 type AgentArgs struct {
-	Addr           string
-	PrivateKey     string
-	PollInterval   int
-	ReportInterval time.Duration
-	IsDev          bool
+	Addr            string
+	PrivateKey      string
+	PollInterval    int
+	ReportInterval  time.Duration
+	ReportRateLimit int
+	IsDev           bool
 }
 
 // ParseAgentArgs парсит агрументы командной строки в AgentArgs.
@@ -110,15 +111,17 @@ func ParseAgentArgs() AgentArgs {
 	privateKey := flag.String("k", "", "key for hash funcs")
 	pollInterval := flag.Int("p", 2, "poll interval (in sec)")
 	reportInterval := flag.Int("r", 2, "report interval (in sec)")
+	reportRateLimit := flag.Int("l", 0, "rate limit for simultaneous reports (0 = no limit)")
 	isDev := flag.Bool("dev", false, "is metrix agent running in development mode")
 
 	flag.Parse()
 
 	args := AgentArgs{
-		Addr:         address.String(),
-		PrivateKey:   *privateKey,
-		PollInterval: *pollInterval,
-		IsDev:        *isDev,
+		Addr:            address.String(),
+		PrivateKey:      *privateKey,
+		PollInterval:    *pollInterval,
+		ReportRateLimit: *reportRateLimit,
+		IsDev:           *isDev,
 	}
 	if reportInterval != nil {
 		args.ReportInterval = time.Duration(*reportInterval) * time.Second
@@ -138,24 +141,29 @@ func ParseAgentArgs() AgentArgs {
 	if envArgs.ReportInterval.Exists && envArgs.ReportInterval.Value > 0 {
 		args.ReportInterval = time.Duration(envArgs.ReportInterval.Value) * time.Second
 	}
+	if envArgs.ReportRateLimit.Exists && envArgs.ReportRateLimit.Value >= 0 {
+		args.ReportRateLimit = envArgs.ReportRateLimit.Value
+	}
 
 	return args
 }
 
 type agentEnvArgs struct {
-	Addr           tools.StrEnvVar
-	PrivateKey     tools.StrEnvVar
-	PollInterval   tools.IntEnvVar
-	ReportInterval tools.IntEnvVar
+	Addr            tools.StrEnvVar
+	PrivateKey      tools.StrEnvVar
+	PollInterval    tools.IntEnvVar
+	ReportInterval  tools.IntEnvVar
+	ReportRateLimit tools.IntEnvVar
 }
 
 // parseAgentArgsFromEnv парсит переменные окружения в agentEnvArgs.
 func parseAgentArgsFromEnv() agentEnvArgs {
 	return agentEnvArgs{
-		Addr:           tools.GetStrFromEnv("ADDRESS"),
-		PrivateKey:     tools.GetStrFromEnv("KEY"),
-		PollInterval:   tools.GetIntFromEnv("POLL_INTERVAL"),
-		ReportInterval: tools.GetIntFromEnv("REPORT_INTERVAL"),
+		Addr:            tools.GetStrFromEnv("ADDRESS"),
+		PrivateKey:      tools.GetStrFromEnv("KEY"),
+		PollInterval:    tools.GetIntFromEnv("POLL_INTERVAL"),
+		ReportInterval:  tools.GetIntFromEnv("REPORT_INTERVAL"),
+		ReportRateLimit: tools.GetIntFromEnv("RATE_LIMIT"),
 	}
 }
 

@@ -3,6 +3,7 @@ package agent
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -17,10 +18,11 @@ import (
 
 // MetrixAgentOptions параметры агента метрик.
 type MetrixAgentOptions struct {
-	ServerAddr     string
-	PrivateKey     string
-	PollInterval   int
-	ReportInterval time.Duration
+	ServerAddr      string
+	PrivateKey      string
+	PollInterval    int
+	ReportInterval  time.Duration
+	ReportRateLimit int
 }
 
 // NewMetrixAgent создаёт новый агент метрик.
@@ -32,7 +34,7 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 		retrier:       tools.DefaulRetrier,
 	}
 
-	agent.worker = newMetrixAgentWorker(opts.ReportInterval, agent.UpdateMetrics)
+	agent.worker = newMetrixAgentWorker(opts.ReportInterval, opts.ReportRateLimit, agent.UpdateMetrics)
 
 	return agent
 }
@@ -47,15 +49,9 @@ type MetrixAgent struct {
 }
 
 // Run запускает агента метрик.
-func (agent *MetrixAgent) Run() {
-	agent.metricsSource.Run()
-	agent.worker.Run()
-}
-
-// Run прекращает работу агента метрик.
-func (agent *MetrixAgent) Stop() {
-	agent.metricsSource.Stop()
-	agent.worker.Stop()
+func (agent *MetrixAgent) Run(ctx context.Context) {
+	agent.metricsSource.Run(ctx)
+	agent.worker.Run(ctx)
 }
 
 // UpdateMetrics обновляет метрики на сервере.
