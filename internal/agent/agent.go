@@ -144,7 +144,6 @@ func (agent *MetrixAgent) sendV2Request(url string, req easyjson.Marshaler) erro
 
 	if agent.privateKey != "" {
 		var hashedReq string
-
 		hashedReq, err = tools.CalcSHA256(reqBytes, agent.privateKey)
 		if err != nil {
 			return err
