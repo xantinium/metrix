@@ -70,6 +70,7 @@ func (pool *metrixAgentWorkerPool) runWorker(ctx context.Context) {
 				return
 			case <-t.C:
 				pool.sm.Acquire()
+				pool.Log(logger.InfoLevel, "uploading metrics...")
 				pool.uploadFunc()
 				pool.sm.Release()
 			}
