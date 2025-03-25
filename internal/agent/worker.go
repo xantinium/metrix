@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"time"
 
 	"github.com/xantinium/metrix/internal/logger"
@@ -10,21 +11,22 @@ type uploadFuncT = func()
 
 // newMetrixAgentWorker создаёт новый воркер для агента метрик.
 //
-// reportInterval - интервал между запросами на выгрузку метрик (сек).
-func newMetrixAgentWorker(reportInterval time.Duration, uploadFunc uploadFuncT) *metrixAgentWorker {
+// reportInterval  - интервал между запросами на выгрузку метрик (сек).
+// reportRateLimit - количество одновременных запросов.
+func newMetrixAgentWorker(reportInterval time.Duration, reportRateLimit int, uploadFunc uploadFuncT) *metrixAgentWorker {
 	return &metrixAgentWorker{
-		stopChan:       make(chan struct{}, 1),
-		reportInterval: reportInterval,
-		uploadFunc:     uploadFunc,
+		reportInterval:  reportInterval,
+		reportRateLimit: reportRateLimit,
+		uploadFunc:      uploadFunc,
 	}
 }
 
 // metrixAgentWorker структура, описывающая воркер
 // для периодической выгрузки метрик на сервер.
 type metrixAgentWorker struct {
-	stopChan       chan struct{}
-	reportInterval time.Duration
-	uploadFunc     uploadFuncT
+	reportInterval  time.Duration
+	reportRateLimit int
+	uploadFunc      uploadFuncT
 }
 
 // Log логирует события воркера.
@@ -39,13 +41,13 @@ func (worker *metrixAgentWorker) Log(msg string) {
 }
 
 // Run запускает воркер.
-func (worker *metrixAgentWorker) Run() {
+func (worker *metrixAgentWorker) Run(ctx context.Context) {
 	t := time.NewTicker(worker.reportInterval)
 
 	go func() {
 		for {
 			select {
-			case <-worker.stopChan:
+			case <-ctx.Done():
 				worker.Log("stopping...")
 				t.Stop()
 				return
@@ -54,9 +56,4 @@ func (worker *metrixAgentWorker) Run() {
 			}
 		}
 	}()
-}
-
-// Stop прекращает работу воркера.
-func (worker *metrixAgentWorker) Stop() {
-	worker.stopChan <- struct{}{}
 }
