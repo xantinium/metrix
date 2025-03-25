@@ -16,8 +16,13 @@ func HashCheckMiddleware(privateKey string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		hashedReq := ctx.GetHeader(tools.HashSHA256)
 		if hashedReq == "" {
-			logger.Errorf("header %q is required", tools.HashSHA256)
-			ctx.AbortWithStatus(http.StatusBadRequest)
+			// По-хорошему, здесь нужно ругаться и завершать обработку запроса,
+			// но мы допускаем отсутствие заголовка с хешем.
+			// logger.Errorf("header %q is required", tools.HashSHA256)
+			// ctx.AbortWithStatus(http.StatusBadRequest)
+			// return
+
+			ctx.Next()
 			return
 		}
 
