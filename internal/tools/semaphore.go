@@ -6,6 +6,7 @@ type Semaphore struct {
 }
 
 // NewSemaphore создает новый семафор.
+// Если max = 0, то блокировок не будет.
 func NewSemaphore(max int) *Semaphore {
 	return &Semaphore{
 		ch: make(chan struct{}, max),
@@ -16,10 +17,14 @@ func NewSemaphore(max int) *Semaphore {
 // Если текущее значение превышает max, исполнение горутрины
 // приостановится, в ожидании вызова Release другой горутиной.
 func (s *Semaphore) Acquire() {
-	s.ch <- struct{}{}
+	if len(s.ch) != 0 {
+		s.ch <- struct{}{}
+	}
 }
 
 // Acquire уменьшает значение семафора на 1.
 func (s *Semaphore) Release() {
-	<-s.ch
+	if len(s.ch) != 0 {
+		<-s.ch
+	}
 }
