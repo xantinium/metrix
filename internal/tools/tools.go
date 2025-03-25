@@ -5,6 +5,7 @@ package tools
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
 	"crypto/sha256"
 	"fmt"
 	"strconv"
@@ -78,7 +79,7 @@ func Decompress(data []byte) ([]byte, error) {
 
 // CalcSHA256 вычисляет хеш SHA-256 от переданных значения и ключа.
 func CalcSHA256(value []byte, key string) (string, error) {
-	h := sha256.New()
+	h := hmac.New(sha256.New, []byte(key))
 	_, err := h.Write(value)
 	if err != nil {
 		return "", err
