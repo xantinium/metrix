@@ -176,17 +176,17 @@ func (agent MetrixAgent) getUpdateMetricHandlerURL(metric models.MetricInfo) str
 		metricValueStr = tools.IntToStr(metric.CounterValue())
 	}
 
-	return fmt.Sprintf("http://%s/update/%s/%s/%s", agent.serverAddr, metricTypeStr, metric.ID(), metricValueStr)
+	return fmt.Sprintf("http://%s/update/%s/%s/%s/", agent.serverAddr, metricTypeStr, metric.ID(), metricValueStr)
 }
 
 // getUpdateMetricV2HandlerURL создаёт URL-адрес для запроса на обновление метрик в JSON формате.
 func (agent MetrixAgent) getUpdateMetricV2HandlerURL() string {
-	return fmt.Sprintf("http://%s/update", agent.serverAddr)
+	return fmt.Sprintf("http://%s/update/", agent.serverAddr)
 }
 
 // getUpdateMetricBatchHandlerURL создаёт URL-адрес для запроса на массовое обновление метрик в JSON формате.
 func (agent MetrixAgent) getUpdateMetricBatchHandlerURL() string {
-	return fmt.Sprintf("http://%s/updates", agent.serverAddr)
+	return fmt.Sprintf("http://%s/updates/", agent.serverAddr)
 }
 
 //easyjson:json
