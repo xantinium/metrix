@@ -16,6 +16,8 @@ import (
 	"github.com/xantinium/metrix/internal/tools"
 )
 
+const agentWorkerPoolSize = 3
+
 // MetrixAgentOptions параметры агента метрик.
 type MetrixAgentOptions struct {
 	ServerAddr      string
@@ -34,7 +36,12 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 		retrier:       tools.DefaulRetrier,
 	}
 
-	agent.worker = newMetrixAgentWorker(opts.ReportInterval, opts.ReportRateLimit, agent.UpdateMetrics)
+	agent.workerPool = newMetrixAgentWorkerPool(metrixAgentWorkerPoolOptions{
+		PoolSize:        agentWorkerPoolSize,
+		ReportInterval:  opts.ReportInterval,
+		ReportRateLimit: opts.ReportRateLimit,
+		UploadFunc:      agent.UpdateMetrics,
+	})
 
 	return agent
 }
@@ -43,7 +50,7 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 type MetrixAgent struct {
 	serverAddr    string
 	privateKey    string
-	worker        *metrixAgentWorker
+	workerPool    *metrixAgentWorkerPool
 	metricsSource *runtimemetrics.RuntimeMetricsSource
 	retrier       *tools.Retrier
 }
@@ -51,7 +58,7 @@ type MetrixAgent struct {
 // Run запускает агента метрик.
 func (agent *MetrixAgent) Run(ctx context.Context) {
 	agent.metricsSource.Run(ctx)
-	agent.worker.Run(ctx)
+	agent.workerPool.Run(ctx)
 }
 
 // UpdateMetrics обновляет метрики на сервере.
