@@ -5,8 +5,16 @@ package tools
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
 	"fmt"
 	"strconv"
+)
+
+const (
+	AcceptEncoding  = "Accept-Encoding"
+	ContentEncoding = "Content-Encoding"
+	ContentType     = "Content-Type"
+	HashSHA256      = "HashSHA256"
 )
 
 // FloatToStr конвертирует float64 в строку.
@@ -66,4 +74,14 @@ func Decompress(data []byte) ([]byte, error) {
 	}
 
 	return b.Bytes(), nil
+}
+
+// CalcSHA256 вычисляет хеш SHA-256 от переданных значения и ключа.
+func CalcSHA256(value []byte, key string) (string, error) {
+	h := sha256.New()
+	_, err := h.Write(value)
+	if err != nil {
+		return "", err
+	}
+	return string(h.Sum(nil)), nil
 }

@@ -18,6 +18,7 @@ import (
 // MetrixAgentOptions параметры агента метрик.
 type MetrixAgentOptions struct {
 	ServerAddr     string
+	PrivateKey     string
 	PollInterval   int
 	ReportInterval time.Duration
 }
@@ -26,6 +27,7 @@ type MetrixAgentOptions struct {
 func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 	agent := &MetrixAgent{
 		serverAddr:    opts.ServerAddr,
+		privateKey:    opts.PrivateKey,
 		metricsSource: runtimemetrics.NewRuntimeMetricsSource(opts.PollInterval),
 		retrier:       tools.DefaulRetrier,
 	}
@@ -38,6 +40,7 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 // MetrixAgent структура, описывающая агент метрик.
 type MetrixAgent struct {
 	serverAddr    string
+	privateKey    string
 	worker        *metrixAgentWorker
 	metricsSource *runtimemetrics.RuntimeMetricsSource
 	retrier       *tools.Retrier
@@ -135,9 +138,20 @@ func (agent *MetrixAgent) sendV2Request(url string, req easyjson.Marshaler) erro
 		return err
 	}
 
-	httpReq.Header.Set("Accept-Encoding", "gzip")
-	httpReq.Header.Set("Content-Encoding", "gzip")
-	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set(tools.AcceptEncoding, "gzip")
+	httpReq.Header.Set(tools.ContentEncoding, "gzip")
+	httpReq.Header.Set(tools.ContentType, "application/json")
+
+	if agent.privateKey != "" {
+		var hashedReq string
+
+		hashedReq, err = tools.CalcSHA256(reqBytes, agent.privateKey)
+		if err != nil {
+			return err
+		}
+
+		httpReq.Header.Set(tools.HashSHA256, hashedReq)
+	}
 
 	agent.retrier.Exec(func() bool {
 		var resp *http.Response
