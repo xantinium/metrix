@@ -18,13 +18,13 @@ func TestMetrixAgent_GetUpdateMetricHandlerUrl(t *testing.T) {
 			name:       "Создание URL-адреса для метрики типа Gauge",
 			serverAddr: "localhost:8080",
 			metric:     models.NewGaugeMetric("Alloc", 123.45),
-			want:       "http://localhost:8080/update/gauge/Alloc/123.45",
+			want:       "http://localhost:8080/update/gauge/Alloc/123.45/",
 		},
 		{
 			name:       "Создание URL-адреса для метрики типа Counter",
 			serverAddr: "localhost:8080",
 			metric:     models.NewCounterMetric("PollCount", 7),
-			want:       "http://localhost:8080/update/counter/PollCount/7",
+			want:       "http://localhost:8080/update/counter/PollCount/7/",
 		},
 	}
 	for _, tt := range tests {

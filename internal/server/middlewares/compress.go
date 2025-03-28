@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xantinium/metrix/internal/tools"
 )
 
 // CompressMiddleware мидлварь для сжатия данных.
@@ -102,19 +103,19 @@ func newCompressWriter(w gin.ResponseWriter) *compressWriter {
 	}
 }
 
-func (c *compressWriter) Write(p []byte) (int, error) {
-	return c.zw.Write(p)
+func (w *compressWriter) Write(p []byte) (int, error) {
+	return w.zw.Write(p)
 }
 
-func (c *compressWriter) WriteHeader(statusCode int) {
+func (w *compressWriter) WriteHeader(statusCode int) {
 	if statusCode < 300 {
-		c.ResponseWriter.Header().Set("Content-Encoding", "gzip")
+		w.ResponseWriter.Header().Set(tools.ContentEncoding, "gzip")
 	}
-	c.ResponseWriter.WriteHeader(statusCode)
+	w.ResponseWriter.WriteHeader(statusCode)
 }
 
-func (c *compressWriter) Close() error {
-	return c.zw.Close()
+func (w *compressWriter) Close() error {
+	return w.zw.Close()
 }
 
 // compressReader реализует интерфейс io.ReadCloser.
@@ -135,13 +136,13 @@ func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	}, nil
 }
 
-func (c compressReader) Read(p []byte) (n int, err error) {
-	return c.zr.Read(p)
+func (r compressReader) Read(p []byte) (n int, err error) {
+	return r.zr.Read(p)
 }
 
-func (c *compressReader) Close() error {
-	if err := c.r.Close(); err != nil {
+func (r *compressReader) Close() error {
+	if err := r.r.Close(); err != nil {
 		return err
 	}
-	return c.zr.Close()
+	return r.zr.Close()
 }

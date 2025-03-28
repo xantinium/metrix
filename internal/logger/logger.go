@@ -39,7 +39,7 @@ type Field struct {
 
 // Info пишет структурированный лог уровня INFO.
 func Info(msg string, fields ...Field) {
-	log(infoLevel, msg, fields...)
+	log(InfoLevel, msg, fields...)
 }
 
 // Infof пишет форматированный лог уровня INFO.
@@ -49,7 +49,7 @@ func Infof(format string, args ...any) {
 
 // Error пишет структурированный лог уровня ERROR.
 func Error(msg string, fields ...Field) {
-	log(errorLevel, msg, fields...)
+	log(ErrorLevel, msg, fields...)
 }
 
 // Errorf пишет форматированный лог уровня ERROR.
@@ -57,14 +57,14 @@ func Errorf(format string, args ...any) {
 	logger.Errorf(format, args)
 }
 
-type logLevel = uint8
+type LogLevel = uint8
 
 const (
-	infoLevel logLevel = iota
-	errorLevel
+	InfoLevel LogLevel = iota
+	ErrorLevel
 )
 
-func log(level logLevel, msg string, fields ...Field) {
+func log(level LogLevel, msg string, fields ...Field) {
 	args := make([]any, len(fields)*2)
 
 	for i, field := range fields {
@@ -73,9 +73,9 @@ func log(level logLevel, msg string, fields ...Field) {
 	}
 
 	switch level {
-	case infoLevel:
+	case InfoLevel:
 		logger.Infow(msg, args...)
-	case errorLevel:
+	case ErrorLevel:
 		logger.Errorw(msg, args...)
 	}
 }

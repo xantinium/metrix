@@ -63,6 +63,7 @@ func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.Metri
 
 		return server.NewMetrixServer(server.MetrixServerOptions{
 			Addr:          args.Addr,
+			PrivateKey:    args.PrivateKey,
 			StoreInterval: args.StoreInterval,
 			Storage:       psqlClient,
 			DBChecker:     psqlClient,
@@ -76,6 +77,7 @@ func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.Metri
 
 	return server.NewMetrixServer(server.MetrixServerOptions{
 		Addr:          args.Addr,
+		PrivateKey:    args.PrivateKey,
 		StoreInterval: args.StoreInterval,
 		Storage:       memStorage,
 		DBChecker:     new(emptyDBChecker),

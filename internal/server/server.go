@@ -37,6 +37,7 @@ func (server *internalMetrixServer) GetMetricsRepo() *metrics.MetricsRepository 
 
 type MetrixServerOptions struct {
 	Addr          string
+	PrivateKey    string
 	StoreInterval time.Duration
 	Storage       metrics.MetricsStorage
 	DBChecker     metrics.DatabaseChecker
@@ -45,7 +46,7 @@ type MetrixServerOptions struct {
 // NewMetrixServer создаёт новый сервер метрик.
 func NewMetrixServer(opts MetrixServerOptions) *MetrixServer {
 	router := gin.New()
-	router.Use(gin.Recovery(), middlewares.CompressMiddleware(), middlewares.LoggerMiddleware())
+	applyMiddlewares(router, opts.PrivateKey)
 
 	internalServer := &internalMetrixServer{
 		router: router,
@@ -60,9 +61,9 @@ func NewMetrixServer(opts MetrixServerOptions) *MetrixServer {
 	handlers.RegisterHandler(internalServer, http.MethodGet, "/value/:type/:id", handlers.GetMetricHandler)
 	handlers.RegisterHandler(internalServer, http.MethodPost, "/update/:type/:id/:value", handlers.UpdateMetricHandler)
 	handlers.RegisterHandler(internalServer, http.MethodGet, "/ping", handlers.PingHandler)
-	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/value", v2handlers.GetMetricHandler)
-	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/update", v2handlers.UpdateMetricHandler)
-	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/updates", v2handlers.UpdateMetricsHandler)
+	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/value/", v2handlers.GetMetricHandler)
+	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/update/", v2handlers.UpdateMetricHandler)
+	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/updates/", v2handlers.UpdateMetricsHandler)
 
 	return &MetrixServer{
 		server: &http.Server{
@@ -110,4 +111,19 @@ func (s *MetrixServer) Stop() error {
 	defer cancel()
 
 	return s.server.Shutdown(ctx)
+}
+
+func applyMiddlewares(router *gin.Engine, privateKey string) {
+	mw := []gin.HandlerFunc{gin.Recovery()}
+
+	if privateKey != "" {
+		mw = append(mw, middlewares.HashCheckMiddleware(privateKey))
+	}
+	mw = append(mw, middlewares.CompressMiddleware())
+	if privateKey != "" {
+		mw = append(mw, middlewares.ResponseHasherMiddleware(privateKey))
+	}
+	mw = append(mw, middlewares.LoggerMiddleware())
+
+	router.Use(mw...)
 }

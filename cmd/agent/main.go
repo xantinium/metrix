@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,15 +18,19 @@ func main() {
 	defer logger.Destroy()
 
 	agent := agent.NewMetrixAgent(agent.MetrixAgentOptions{
-		ServerAddr:     args.Addr,
-		PollInterval:   args.PollInterval,
-		ReportInterval: args.ReportInterval,
+		ServerAddr:      args.Addr,
+		PrivateKey:      args.PrivateKey,
+		PollInterval:    args.PollInterval,
+		ReportInterval:  args.ReportInterval,
+		ReportRateLimit: args.ReportRateLimit,
 	})
 
-	agent.Run()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	agent.Run(ctx)
 
 	<-waitForStopSignal()
-	agent.Stop()
 }
 
 func waitForStopSignal() <-chan os.Signal {

@@ -3,6 +3,7 @@ package agent
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -15,22 +16,32 @@ import (
 	"github.com/xantinium/metrix/internal/tools"
 )
 
+const agentWorkerPoolSize = 3
+
 // MetrixAgentOptions параметры агента метрик.
 type MetrixAgentOptions struct {
-	ServerAddr     string
-	PollInterval   int
-	ReportInterval time.Duration
+	ServerAddr      string
+	PrivateKey      string
+	PollInterval    int
+	ReportInterval  time.Duration
+	ReportRateLimit int
 }
 
 // NewMetrixAgent создаёт новый агент метрик.
 func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 	agent := &MetrixAgent{
 		serverAddr:    opts.ServerAddr,
+		privateKey:    opts.PrivateKey,
 		metricsSource: runtimemetrics.NewRuntimeMetricsSource(opts.PollInterval),
 		retrier:       tools.DefaulRetrier,
 	}
 
-	agent.worker = newMetrixAgentWorker(opts.ReportInterval, agent.UpdateMetrics)
+	agent.workerPool = newMetrixAgentWorkerPool(metrixAgentWorkerPoolOptions{
+		PoolSize:        agentWorkerPoolSize,
+		ReportInterval:  opts.ReportInterval,
+		ReportRateLimit: opts.ReportRateLimit,
+		UploadFunc:      agent.UpdateMetrics,
+	})
 
 	return agent
 }
@@ -38,21 +49,16 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 // MetrixAgent структура, описывающая агент метрик.
 type MetrixAgent struct {
 	serverAddr    string
-	worker        *metrixAgentWorker
+	privateKey    string
+	workerPool    *metrixAgentWorkerPool
 	metricsSource *runtimemetrics.RuntimeMetricsSource
 	retrier       *tools.Retrier
 }
 
 // Run запускает агента метрик.
-func (agent *MetrixAgent) Run() {
-	agent.metricsSource.Run()
-	agent.worker.Run()
-}
-
-// Run прекращает работу агента метрик.
-func (agent *MetrixAgent) Stop() {
-	agent.metricsSource.Stop()
-	agent.worker.Stop()
+func (agent *MetrixAgent) Run(ctx context.Context) {
+	agent.metricsSource.Run(ctx)
+	agent.workerPool.Run(ctx)
 }
 
 // UpdateMetrics обновляет метрики на сервере.
@@ -135,9 +141,19 @@ func (agent *MetrixAgent) sendV2Request(url string, req easyjson.Marshaler) erro
 		return err
 	}
 
-	httpReq.Header.Set("Accept-Encoding", "gzip")
-	httpReq.Header.Set("Content-Encoding", "gzip")
-	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set(tools.AcceptEncoding, "gzip")
+	httpReq.Header.Set(tools.ContentEncoding, "gzip")
+	httpReq.Header.Set(tools.ContentType, "application/json")
+
+	if agent.privateKey != "" {
+		var hashedReq string
+		hashedReq, err = tools.CalcSHA256(reqBytes, agent.privateKey)
+		if err != nil {
+			return err
+		}
+
+		httpReq.Header.Set(tools.HashSHA256, hashedReq)
+	}
 
 	agent.retrier.Exec(func() bool {
 		var resp *http.Response
@@ -163,17 +179,17 @@ func (agent MetrixAgent) getUpdateMetricHandlerURL(metric models.MetricInfo) str
 		metricValueStr = tools.IntToStr(metric.CounterValue())
 	}
 
-	return fmt.Sprintf("http://%s/update/%s/%s/%s", agent.serverAddr, metricTypeStr, metric.ID(), metricValueStr)
+	return fmt.Sprintf("http://%s/update/%s/%s/%s/", agent.serverAddr, metricTypeStr, metric.ID(), metricValueStr)
 }
 
 // getUpdateMetricV2HandlerURL создаёт URL-адрес для запроса на обновление метрик в JSON формате.
 func (agent MetrixAgent) getUpdateMetricV2HandlerURL() string {
-	return fmt.Sprintf("http://%s/update", agent.serverAddr)
+	return fmt.Sprintf("http://%s/update/", agent.serverAddr)
 }
 
 // getUpdateMetricBatchHandlerURL создаёт URL-адрес для запроса на массовое обновление метрик в JSON формате.
 func (agent MetrixAgent) getUpdateMetricBatchHandlerURL() string {
-	return fmt.Sprintf("http://%s/updates", agent.serverAddr)
+	return fmt.Sprintf("http://%s/updates/", agent.serverAddr)
 }
 
 //easyjson:json
