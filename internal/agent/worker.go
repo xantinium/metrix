@@ -59,7 +59,7 @@ func (pool *metrixAgentWorkerPool) Run(ctx context.Context) {
 }
 
 func (pool *metrixAgentWorkerPool) runWorker(ctx context.Context) {
-	t := time.NewTicker(pool.reportInterval)
+	t := time.NewTimer(pool.reportInterval)
 
 	go func() {
 		for {
@@ -73,6 +73,7 @@ func (pool *metrixAgentWorkerPool) runWorker(ctx context.Context) {
 				pool.Log(logger.InfoLevel, "uploading metrics...")
 				pool.uploadFunc()
 				pool.sm.Release()
+				t.Reset(pool.reportInterval)
 			}
 		}
 	}()
