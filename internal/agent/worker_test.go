@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/xantinium/metrix/internal/agent"
 	"github.com/xantinium/metrix/internal/logger"
 )

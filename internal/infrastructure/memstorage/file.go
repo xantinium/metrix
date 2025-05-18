@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/mailru/easyjson"
+
 	"github.com/xantinium/metrix/internal/models"
 )
 
