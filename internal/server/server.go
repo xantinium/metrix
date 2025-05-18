@@ -118,7 +118,7 @@ func (b *MetrixServerBuilder) Build() *MetrixServer {
 			Handler: router,
 		},
 		internalServer:     internalServer,
-		worker:             newMetrixServerWorker(b.storeInterval, b.storage),
+		worker:             NewMetrixServerWorker(b.storeInterval, b.storage),
 		isProfilingEnabled: b.isProfilingEnabled,
 	}
 }
@@ -127,7 +127,7 @@ func (b *MetrixServerBuilder) Build() *MetrixServer {
 type MetrixServer struct {
 	server             *http.Server
 	internalServer     *internalMetrixServer
-	worker             *metrixServerWorker
+	worker             *MetrixServerWorker
 	isProfilingEnabled bool
 }
 

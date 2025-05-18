@@ -39,7 +39,7 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 		retrier:            tools.DefaulRetrier,
 	}
 
-	agent.workerPool = newMetrixAgentWorkerPool(metrixAgentWorkerPoolOptions{
+	agent.workerPool = NewMetrixAgentWorkerPool(MetrixAgentWorkerPoolOptions{
 		PoolSize:        agentWorkerPoolSize,
 		ReportInterval:  opts.ReportInterval,
 		ReportRateLimit: opts.ReportRateLimit,
@@ -54,7 +54,7 @@ type MetrixAgent struct {
 	serverAddr         string
 	privateKey         string
 	isProfilingEnabled bool
-	workerPool         *metrixAgentWorkerPool
+	workerPool         *MetrixAgentWorkerPool
 	metricsSource      *runtimemetrics.RuntimeMetricsSource
 	retrier            *tools.Retrier
 }
