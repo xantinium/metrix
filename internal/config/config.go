@@ -15,13 +15,14 @@ import (
 
 // ServerArgs структура, описывающая аргументы сервера.
 type ServerArgs struct {
-	Addr            string
-	IsDev           bool
-	PrivateKey      string
-	StoreInterval   time.Duration
-	StoragePath     string
-	RestoreStorage  bool
-	DatabaseConnStr string
+	Addr               string
+	IsDev              bool
+	IsProfilingEnabled bool
+	PrivateKey         string
+	StoreInterval      time.Duration
+	StoragePath        string
+	RestoreStorage     bool
+	DatabaseConnStr    string
 }
 
 // ParseServerArgs парсит агрументы командной строки в ServerArgs.
@@ -29,6 +30,7 @@ func ParseServerArgs() ServerArgs {
 	address := new(NetAddress)
 	flag.Var(address, "a", "address of metrix server in form <host:port>")
 	isDev := flag.Bool("dev", false, "is metrix server running in development mode")
+	isProfilingEnabled := flag.Bool("profile", false, "is profiling via pprof enabled")
 	privateKey := flag.String("k", "", "key for hash funcs")
 	storeInterval := flag.Int("i", 300, "interval (in seconds) of writing metrics into file")
 	storagePath := flag.String("f", "./metrix.db", "path to file for metrics writing")
@@ -38,12 +40,13 @@ func ParseServerArgs() ServerArgs {
 	flag.Parse()
 
 	args := ServerArgs{
-		Addr:            address.String(),
-		IsDev:           *isDev,
-		PrivateKey:      *privateKey,
-		StoragePath:     *storagePath,
-		RestoreStorage:  *restoreStorage,
-		DatabaseConnStr: *databaseConnStr,
+		Addr:               address.String(),
+		IsDev:              *isDev,
+		PrivateKey:         *privateKey,
+		StoragePath:        *storagePath,
+		RestoreStorage:     *restoreStorage,
+		DatabaseConnStr:    *databaseConnStr,
+		IsProfilingEnabled: *isProfilingEnabled,
 	}
 	if storeInterval != nil {
 		args.StoreInterval = time.Duration(*storeInterval) * time.Second
@@ -96,12 +99,13 @@ func parseServerArgsFromEnv() serverEnvArgs {
 
 // AgentArgs структура, описывающая аргументы агента.
 type AgentArgs struct {
-	Addr            string
-	PrivateKey      string
-	PollInterval    int
-	ReportInterval  time.Duration
-	ReportRateLimit int
-	IsDev           bool
+	Addr               string
+	PrivateKey         string
+	PollInterval       int
+	ReportInterval     time.Duration
+	ReportRateLimit    int
+	IsDev              bool
+	IsProfilingEnabled bool
 }
 
 // ParseAgentArgs парсит агрументы командной строки в AgentArgs.
@@ -113,15 +117,17 @@ func ParseAgentArgs() AgentArgs {
 	reportInterval := flag.Int("r", 2, "report interval (in sec)")
 	reportRateLimit := flag.Int("l", 0, "rate limit for simultaneous reports (0 = no limit)")
 	isDev := flag.Bool("dev", false, "is metrix agent running in development mode")
+	isProfilingEnabled := flag.Bool("profile", false, "is profiling via pprof enabled")
 
 	flag.Parse()
 
 	args := AgentArgs{
-		Addr:            address.String(),
-		PrivateKey:      *privateKey,
-		PollInterval:    *pollInterval,
-		ReportRateLimit: *reportRateLimit,
-		IsDev:           *isDev,
+		Addr:               address.String(),
+		PrivateKey:         *privateKey,
+		PollInterval:       *pollInterval,
+		ReportRateLimit:    *reportRateLimit,
+		IsDev:              *isDev,
+		IsProfilingEnabled: *isProfilingEnabled,
 	}
 	if reportInterval != nil {
 		args.ReportInterval = time.Duration(*reportInterval) * time.Second

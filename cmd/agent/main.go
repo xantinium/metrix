@@ -18,11 +18,12 @@ func main() {
 	defer logger.Destroy()
 
 	agent := agent.NewMetrixAgent(agent.MetrixAgentOptions{
-		ServerAddr:      args.Addr,
-		PrivateKey:      args.PrivateKey,
-		PollInterval:    args.PollInterval,
-		ReportInterval:  args.ReportInterval,
-		ReportRateLimit: args.ReportRateLimit,
+		ServerAddr:         args.Addr,
+		PrivateKey:         args.PrivateKey,
+		PollInterval:       args.PollInterval,
+		ReportInterval:     args.ReportInterval,
+		ReportRateLimit:    args.ReportRateLimit,
+		IsProfilingEnabled: args.IsProfilingEnabled,
 	})
 
 	ctx, cancel := context.WithCancel(context.Background())
