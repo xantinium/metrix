@@ -27,7 +27,7 @@ import (
 // @Failure 400 {string} string "Неверный запрос"
 // @Failure 404 {string} string "Метрика не найдена"
 // @Failure 500 {string} string "Внутренняя ошибка"
-// @Router /value [get]
+// @Router /value [post]
 func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.Marshaler, error) {
 	req, err := ParseGetMetricRequest(ctx)
 	if err != nil {

@@ -186,7 +186,7 @@ paths:
       tags:
       - Metrics
   /value:
-    get:
+    post:
       consumes:
       - application/json
       description: Получение метрики по ID
