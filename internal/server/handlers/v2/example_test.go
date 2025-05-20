@@ -23,7 +23,7 @@ func ExampleGetMetricHandler() {
 	}
 
 	// Выполняем запрос на получение метрики.
-	http.Post("/value", "application/json", bytes.NewBuffer(reqBytes))
+	sendHTTPRequest(http.MethodPost, "/value", reqBytes)
 }
 
 func ExampleUpdateMetricHandler() {
@@ -44,7 +44,7 @@ func ExampleUpdateMetricHandler() {
 		}
 
 		// Выполняем запрос на обновление метрики.
-		http.Post("/update", "application/json", bytes.NewBuffer(reqBytes))
+		sendHTTPRequest(http.MethodPost, "/update", reqBytes)
 	}
 
 	{
@@ -64,7 +64,7 @@ func ExampleUpdateMetricHandler() {
 		}
 
 		// Выполняем запрос на обновление метрики.
-		http.Post("/update", "application/json", bytes.NewBuffer(reqBytes))
+		sendHTTPRequest(http.MethodPost, "/update", reqBytes)
 	}
 }
 
@@ -90,8 +90,8 @@ func ExampleUpdateMetricsHandler() {
 		panic(err)
 	}
 
-	// Выполняем запрос на получение метрики.
-	http.Post("/updates", "application/json", bytes.NewBuffer(reqBytes))
+	// Выполняем запрос на батчевое обновление метрик.
+	sendHTTPRequest(http.MethodPost, "/updates", reqBytes)
 }
 
 func newInt64(v int64) *int64 {
@@ -100,4 +100,19 @@ func newInt64(v int64) *int64 {
 
 func newFloat64(v float64) *float64 {
 	return &v
+}
+
+func sendHTTPRequest(method, url string, body []byte) {
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
+	if err != nil {
+		panic(err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	var resp *http.Response
+	resp, err = http.DefaultClient.Do(req)
+	if err == nil {
+		resp.Body.Close()
+	}
 }
