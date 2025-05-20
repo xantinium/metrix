@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// IntEnvVar переменная окружения тип int.
 type IntEnvVar struct {
 	Exists bool
 	Value  int
@@ -25,6 +26,7 @@ func GetIntFromEnv(name string) IntEnvVar {
 	return IntEnvVar{Exists: true, Value: value}
 }
 
+// StrEnvVar переменная окружения тип string.
 type StrEnvVar struct {
 	Exists bool
 	Value  string
@@ -40,6 +42,7 @@ func GetStrFromEnv(name string) StrEnvVar {
 	return StrEnvVar{Exists: true, Value: valueStr}
 }
 
+// BoolEnvVar переменная окружения тип bool.
 type BoolEnvVar struct {
 	Exists bool
 	Value  bool

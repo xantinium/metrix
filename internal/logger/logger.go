@@ -57,10 +57,13 @@ func Errorf(format string, args ...any) {
 	logger.Errorf(format, args)
 }
 
+// LogLevel уровень логирования.
 type LogLevel = uint8
 
 const (
+	// InfoLevel уровень для нейтральных уведомлений.
 	InfoLevel LogLevel = iota
+	// ErrorLevel уровень для ошибок.
 	ErrorLevel
 )
 

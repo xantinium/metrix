@@ -10,6 +10,7 @@ import (
 
 type uploadFuncT = func()
 
+// MetrixAgentWorkerPoolOptions параметры для пула воркеров.
 type MetrixAgentWorkerPoolOptions struct {
 	PoolSize        int
 	ReportInterval  time.Duration // интервал между запросами на выгрузку метрик (сек).

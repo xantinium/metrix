@@ -69,11 +69,13 @@ func getCounterMetricHandler(ctx context.Context, repo *metrics.MetricsRepositor
 	}, nil
 }
 
+// GetMetricsRequest запрос на получение метрики.
 type GetMetricsRequest struct {
 	MetricID   string
 	MetricType models.MetricType
 }
 
+// ParseGetMetricRequest парсит запрос на получение метрики.
 func ParseGetMetricRequest(ctx *gin.Context) (GetMetricsRequest, error) {
 	var (
 		err       error

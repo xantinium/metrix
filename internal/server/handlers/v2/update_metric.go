@@ -50,6 +50,7 @@ type UpdateMetricRequest struct {
 	Metric models.MetricInfo
 }
 
+// ParseUpdateMetricRequest парсит запрос на обновление метрики.
 func ParseUpdateMetricRequest(ctx *gin.Context) (UpdateMetricRequest, error) {
 	var (
 		err       error
