@@ -12,6 +12,18 @@ import (
 )
 
 // UpdateMetricHandler реализация хендлера для обновления метрик.
+// @Tags Metrics
+// @Summary Обновления метрики
+// @Description Обновления метрики
+// @ID updateMetric
+// @Accept  json
+// @Produce json
+// @Param payload body Metrics true "Тело запроса"
+// @Success 200 {object} Metrics
+// @Failure 400 {string} string "Неверный запрос"
+// @Failure 404 {string} string "Метрика не найдена"
+// @Failure 500 {string} string "Внутренняя ошибка"
+// @Router /update [post]
 func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.Marshaler, error) {
 	var (
 		updatedGaugeValue   float64
@@ -46,6 +58,7 @@ func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.M
 	return http.StatusOK, resp, nil
 }
 
+// UpdateMetricRequest запрос на обновление метрики.
 type UpdateMetricRequest struct {
 	Metric models.MetricInfo
 }

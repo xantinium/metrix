@@ -16,6 +16,18 @@ import (
 )
 
 // GetMetricHandler реализация хендлера для получения метрик.
+// @Tags Metrics
+// @Summary Получение метрики
+// @Description Получение метрики по ID
+// @ID getMetric
+// @Accept  json
+// @Produce json
+// @Param payload body GetMetricsRequest true "Тело запроса"
+// @Success 200 {object} Metrics
+// @Failure 400 {string} string "Неверный запрос"
+// @Failure 404 {string} string "Метрика не найдена"
+// @Failure 500 {string} string "Внутренняя ошибка"
+// @Router /value [get]
 func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.Marshaler, error) {
 	req, err := ParseGetMetricRequest(ctx)
 	if err != nil {
@@ -71,8 +83,10 @@ func getCounterMetricHandler(ctx context.Context, repo *metrics.MetricsRepositor
 
 // GetMetricsRequest запрос на получение метрики.
 type GetMetricsRequest struct {
-	MetricID   string
-	MetricType models.MetricType
+	// Идентификатор метрики
+	MetricID string `example:"Alloc"`
+	// Тип метрики
+	MetricType models.MetricType `example:"gauge"`
 }
 
 // ParseGetMetricRequest парсит запрос на получение метрики.

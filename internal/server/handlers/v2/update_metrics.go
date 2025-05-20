@@ -12,6 +12,18 @@ import (
 )
 
 // UpdateMetricsHandler реализация хендлера для батчевого обновления метрик.
+// @Tags Metrics
+// @Summary Батчевое обновление метрик
+// @Description Батчевое обновление метрик
+// @ID updateMetrics
+// @Accept  json
+// @Produce json
+// @Param payload body MetricsBatch true "Тело запроса"
+// @Success 200 {object} nil
+// @Failure 400 {string} string "Неверный запрос"
+// @Failure 404 {string} string "Метрика не найдена"
+// @Failure 500 {string} string "Внутренняя ошибка"
+// @Router /updates [post]
 func UpdateMetricsHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.Marshaler, error) {
 	req, err := ParseUpdateMetricsRequest(ctx)
 	if err != nil {
@@ -26,6 +38,7 @@ func UpdateMetricsHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.
 	return http.StatusOK, nil, nil
 }
 
+// UpdateMetricsRequest запрос на батчевое обновление метрик.
 type UpdateMetricsRequest struct {
 	Metrics []models.MetricInfo
 }
