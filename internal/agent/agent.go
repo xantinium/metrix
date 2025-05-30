@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	_ "net/http/pprof" // Используется для корректной работы профилировщика.
 	"time"
 
 	"github.com/mailru/easyjson"
@@ -20,23 +21,25 @@ const agentWorkerPoolSize = 3
 
 // MetrixAgentOptions параметры агента метрик.
 type MetrixAgentOptions struct {
-	ServerAddr      string
-	PrivateKey      string
-	PollInterval    int
-	ReportInterval  time.Duration
-	ReportRateLimit int
+	ServerAddr         string
+	PrivateKey         string
+	PollInterval       int
+	ReportInterval     time.Duration
+	ReportRateLimit    int
+	IsProfilingEnabled bool
 }
 
 // NewMetrixAgent создаёт новый агент метрик.
 func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 	agent := &MetrixAgent{
-		serverAddr:    opts.ServerAddr,
-		privateKey:    opts.PrivateKey,
-		metricsSource: runtimemetrics.NewRuntimeMetricsSource(opts.PollInterval),
-		retrier:       tools.DefaulRetrier,
+		serverAddr:         opts.ServerAddr,
+		privateKey:         opts.PrivateKey,
+		isProfilingEnabled: opts.IsProfilingEnabled,
+		metricsSource:      runtimemetrics.NewRuntimeMetricsSource(opts.PollInterval),
+		retrier:            tools.DefaulRetrier,
 	}
 
-	agent.workerPool = newMetrixAgentWorkerPool(metrixAgentWorkerPoolOptions{
+	agent.workerPool = NewMetrixAgentWorkerPool(MetrixAgentWorkerPoolOptions{
 		PoolSize:        agentWorkerPoolSize,
 		ReportInterval:  opts.ReportInterval,
 		ReportRateLimit: opts.ReportRateLimit,
@@ -48,17 +51,22 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 
 // MetrixAgent структура, описывающая агент метрик.
 type MetrixAgent struct {
-	serverAddr    string
-	privateKey    string
-	workerPool    *metrixAgentWorkerPool
-	metricsSource *runtimemetrics.RuntimeMetricsSource
-	retrier       *tools.Retrier
+	serverAddr         string
+	privateKey         string
+	isProfilingEnabled bool
+	workerPool         *MetrixAgentWorkerPool
+	metricsSource      *runtimemetrics.RuntimeMetricsSource
+	retrier            *tools.Retrier
 }
 
 // Run запускает агента метрик.
 func (agent *MetrixAgent) Run(ctx context.Context) {
 	agent.metricsSource.Run(ctx)
 	agent.workerPool.Run(ctx)
+
+	if agent.isProfilingEnabled {
+		tools.RunProfilingServer()
+	}
 }
 
 // UpdateMetrics обновляет метрики на сервере.

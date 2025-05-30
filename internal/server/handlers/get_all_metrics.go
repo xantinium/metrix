@@ -12,6 +12,14 @@ import (
 )
 
 // GetAllMetricHandler реализация хендлера для получения всех метрик в виде HTML.
+// @Tags Metrics_Legacy
+// @Summary Запрос на получение всех метрик
+// @Description Запрос на получение всех метрик
+// @ID getAllMetrics
+// @Produce text/plain
+// @Success 200 {string} string
+// @Failure 500 {string} string "Внутренняя ошибка"
+// @Router / [get]
 func GetAllMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, error) {
 	metrics, err := s.GetMetricsRepo().GetAllMetrics(ctx)
 	if err != nil {

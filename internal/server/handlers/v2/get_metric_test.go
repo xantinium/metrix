@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/xantinium/metrix/internal/models"
 	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
 )

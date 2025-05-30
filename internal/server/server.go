@@ -5,13 +5,16 @@ package server
 import (
 	"context"
 	"net/http"
+	_ "net/http/pprof" // Используется для корректной работы профилировщика.
 	"time"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/xantinium/metrix/internal/repository/metrics"
 	"github.com/xantinium/metrix/internal/server/handlers"
 	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
 	"github.com/xantinium/metrix/internal/server/middlewares"
+	"github.com/xantinium/metrix/internal/tools"
 )
 
 func init() {
@@ -35,25 +38,65 @@ func (server *internalMetrixServer) GetMetricsRepo() *metrics.MetricsRepository 
 	return server.metricsRepo
 }
 
-type MetrixServerOptions struct {
-	Addr          string
-	PrivateKey    string
-	StoreInterval time.Duration
-	Storage       metrics.MetricsStorage
-	DBChecker     metrics.DatabaseChecker
+// MetrixServerBuilder билдер для создания сервера метрик.
+type MetrixServerBuilder struct {
+	addr               string
+	privateKey         string
+	storeInterval      time.Duration
+	isProfilingEnabled bool
+	dbChecker          metrics.DatabaseChecker
+	storage            metrics.MetricsStorage
 }
 
-// NewMetrixServer создаёт новый сервер метрик.
-func NewMetrixServer(opts MetrixServerOptions) *MetrixServer {
+// NewMetrixServerBuilder создаёт новый билдер сервера метрик.
+func NewMetrixServerBuilder() *MetrixServerBuilder {
+	return &MetrixServerBuilder{}
+}
+
+// SetAddr устанавливает адрес сервера метрик.
+func (b *MetrixServerBuilder) SetAddr(addr string) *MetrixServerBuilder {
+	b.addr = addr
+	return b
+}
+
+// SetPrivateKey устанавливает приватный ключ,
+// используемый в алгоритмах хеширования.
+func (b *MetrixServerBuilder) SetPrivateKey(key string) *MetrixServerBuilder {
+	b.privateKey = key
+	return b
+}
+
+// SetStoreInterval устанавливает интервал между
+// сохранениями метрик.
+func (b *MetrixServerBuilder) SetStoreInterval(interval time.Duration) *MetrixServerBuilder {
+	b.storeInterval = interval
+	return b
+}
+
+// EnabledProfiling активирует профилирование.
+func (b *MetrixServerBuilder) EnabledProfiling() *MetrixServerBuilder {
+	b.isProfilingEnabled = true
+	return b
+}
+
+// SetStorage устанавливает базу данных для хранения метрик.
+// Также, устанавливает сущность для проверки соединения с БД.
+func (b *MetrixServerBuilder) SetStorage(storage metrics.MetricsStorage, checker metrics.DatabaseChecker) *MetrixServerBuilder {
+	b.storage = storage
+	b.dbChecker = checker
+	return b
+}
+
+func (b *MetrixServerBuilder) Build() *MetrixServer {
 	router := gin.New()
-	applyMiddlewares(router, opts.PrivateKey)
+	applyMiddlewares(router, b.privateKey)
 
 	internalServer := &internalMetrixServer{
 		router: router,
 		metricsRepo: metrics.NewMetricsRepository(metrics.MetricsRepositoryOptions{
-			Storage:     opts.Storage,
-			SyncMetrics: opts.StoreInterval == 0,
-			DBChecker:   opts.DBChecker,
+			Storage:     b.storage,
+			SyncMetrics: b.storeInterval == 0,
+			DBChecker:   b.dbChecker,
 		}),
 	}
 
@@ -67,23 +110,29 @@ func NewMetrixServer(opts MetrixServerOptions) *MetrixServer {
 
 	return &MetrixServer{
 		server: &http.Server{
-			Addr:    opts.Addr,
+			Addr:    b.addr,
 			Handler: router,
 		},
-		internalServer: internalServer,
-		worker:         newMetrixServerWorker(opts.StoreInterval, opts.Storage),
+		internalServer:     internalServer,
+		worker:             NewMetrixServerWorker(b.storeInterval, b.storage),
+		isProfilingEnabled: b.isProfilingEnabled,
 	}
 }
 
 // MetrixServer структура, описывающая сервер метрик.
 type MetrixServer struct {
-	server         *http.Server
-	internalServer *internalMetrixServer
-	worker         *metrixServerWorker
+	server             *http.Server
+	internalServer     *internalMetrixServer
+	worker             *MetrixServerWorker
+	isProfilingEnabled bool
 }
 
 // Run запускает сервер метрик.
 func (s *MetrixServer) Run() chan error {
+	if s.isProfilingEnabled {
+		tools.RunProfilingServer()
+	}
+
 	errChan := make(chan error, 1)
 
 	go func() {

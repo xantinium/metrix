@@ -10,7 +10,7 @@ import (
 	"github.com/xantinium/metrix/internal/models"
 )
 
-func TestMetricsRepository_UpdateGaugeMetric(t *testing.T) {
+func TestMetricsRepository_UpdateMetric(t *testing.T) {
 	ctx := context.Background()
 
 	storage, err := memstorage.NewMemStorage("metrix.db", false)

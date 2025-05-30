@@ -11,38 +11,27 @@ type MetricsSaver interface {
 	SaveMetrics(ctx context.Context) error
 }
 
-// newMetrixServerWorker создаёт новый воркер для сервера метрик.
+// NewMetrixServerWorker создаёт новый воркер для сервера метрик.
 //
 // storeInterval - интервал между сохранениями метрик (сек).
-func newMetrixServerWorker(storeInterval time.Duration, metricsSaver MetricsSaver) *metrixServerWorker {
-	return &metrixServerWorker{
+func NewMetrixServerWorker(storeInterval time.Duration, metricsSaver MetricsSaver) *MetrixServerWorker {
+	return &MetrixServerWorker{
 		stopFunc:      func() {},
 		storeInterval: storeInterval,
 		metricsSaver:  metricsSaver,
 	}
 }
 
-// metrixServerWorker структура, описывающая воркер
+// MetrixServerWorker структура, описывающая воркер
 // для периодического сохранения метрик.
-type metrixServerWorker struct {
+type MetrixServerWorker struct {
 	stopFunc      context.CancelFunc
 	storeInterval time.Duration
 	metricsSaver  MetricsSaver
 }
 
-// Log логирует события воркера.
-func (worker *metrixServerWorker) Log(msg string) {
-	logger.Info(
-		msg,
-		logger.Field{
-			Name:  "entity",
-			Value: "server-worker",
-		},
-	)
-}
-
 // Run запускает воркер.
-func (worker *metrixServerWorker) Run() {
+func (worker *MetrixServerWorker) Run() {
 	var ctx context.Context
 	ctx, worker.stopFunc = context.WithCancel(context.TODO())
 
@@ -54,13 +43,13 @@ func (worker *metrixServerWorker) Run() {
 			for {
 				select {
 				case <-ctx.Done():
-					worker.Log("stopping...")
+					worker.log("stopping...")
 					t.Stop()
 					return
 				case <-t.C:
 					err := worker.metricsSaver.SaveMetrics(ctx)
 					if err != nil {
-						worker.Log("failed to save metrics")
+						worker.log("failed to save metrics")
 					}
 				}
 			}
@@ -69,6 +58,17 @@ func (worker *metrixServerWorker) Run() {
 }
 
 // Stop прекращает работу воркера.
-func (worker *metrixServerWorker) Stop() {
+func (worker *MetrixServerWorker) Stop() {
 	worker.stopFunc()
+}
+
+// log логирует события воркера.
+func (worker *MetrixServerWorker) log(msg string) {
+	logger.Info(
+		msg,
+		logger.Field{
+			Name:  "entity",
+			Value: "server-worker",
+		},
+	)
 }

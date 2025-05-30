@@ -12,6 +12,18 @@ import (
 )
 
 // UpdateMetricHandler реализация хендлера для обновления метрик.
+// @Tags Metrics_Legacy
+// @Summary Запрос на обновление метрик
+// @Description Запрос на обновление метрик
+// @ID updateMetricLegacy
+// @Produce text/plain
+// @Param metric_type path string true "Тип метрики"
+// @Param metric_id path string true "Идентификатор метрики"
+// @Param metric_value path string true "Значение метрики"
+// @Success 200 {string} string
+// @Failure 400 {string} string "Неверный запрос"
+// @Failure 500 {string} string "Внутренняя ошибка"
+// @Router /update/{metric_type}/{metric_id}/{metric_value} [post]
 func UpdateMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, error) {
 	req, err := parseUpdateMetricRequest(ctx)
 	if err != nil {

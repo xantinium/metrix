@@ -9,6 +9,7 @@ import (
 	"github.com/xantinium/metrix/internal/models"
 )
 
+// MetricsRepositoryOptions параметры для репозитория метрик.
 type MetricsRepositoryOptions struct {
 	Storage MetricsStorage
 	// SyncMetrics нужно ли сохранять метрики после каждой мутации.

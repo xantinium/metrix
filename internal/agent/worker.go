@@ -10,16 +10,17 @@ import (
 
 type uploadFuncT = func()
 
-type metrixAgentWorkerPoolOptions struct {
+// MetrixAgentWorkerPoolOptions параметры для пула воркеров.
+type MetrixAgentWorkerPoolOptions struct {
 	PoolSize        int
 	ReportInterval  time.Duration // интервал между запросами на выгрузку метрик (сек).
 	ReportRateLimit int           // количество одновременных запросов.
 	UploadFunc      uploadFuncT
 }
 
-// newMetrixAgentWorkerPool создаёт новый пул воркеров для агента метрик.
-func newMetrixAgentWorkerPool(opts metrixAgentWorkerPoolOptions) *metrixAgentWorkerPool {
-	return &metrixAgentWorkerPool{
+// NewMetrixAgentWorkerPool создаёт новый пул воркеров для агента метрик.
+func NewMetrixAgentWorkerPool(opts MetrixAgentWorkerPoolOptions) *MetrixAgentWorkerPool {
+	return &MetrixAgentWorkerPool{
 		sm:             tools.NewSemaphore(opts.ReportRateLimit),
 		poolSize:       opts.PoolSize,
 		reportInterval: opts.ReportInterval,
@@ -27,9 +28,9 @@ func newMetrixAgentWorkerPool(opts metrixAgentWorkerPoolOptions) *metrixAgentWor
 	}
 }
 
-// metrixAgentWorkerPool структура, описывающая пул воркеров
+// MetrixAgentWorkerPool структура, описывающая пул воркеров
 // для периодической выгрузки метрик на сервер.
-type metrixAgentWorkerPool struct {
+type MetrixAgentWorkerPool struct {
 	sm             *tools.Semaphore
 	poolSize       int
 	reportInterval time.Duration
@@ -37,7 +38,7 @@ type metrixAgentWorkerPool struct {
 }
 
 // Log логирует события воркеров.
-func (pool *metrixAgentWorkerPool) Log(lvl logger.LogLevel, msg string) {
+func (pool *MetrixAgentWorkerPool) Log(lvl logger.LogLevel, msg string) {
 	field := logger.Field{
 		Name:  "entity",
 		Value: "agent-worker",
@@ -52,13 +53,13 @@ func (pool *metrixAgentWorkerPool) Log(lvl logger.LogLevel, msg string) {
 }
 
 // Run запускает воркеры.
-func (pool *metrixAgentWorkerPool) Run(ctx context.Context) {
+func (pool *MetrixAgentWorkerPool) Run(ctx context.Context) {
 	for range pool.poolSize {
 		go pool.runWorker(ctx)
 	}
 }
 
-func (pool *metrixAgentWorkerPool) runWorker(ctx context.Context) {
+func (pool *MetrixAgentWorkerPool) runWorker(ctx context.Context) {
 	t := time.NewTimer(pool.reportInterval)
 
 	go func() {

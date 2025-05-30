@@ -1,0 +1,256 @@
+definitions:
+  models.MetricType:
+    enum:
+    - gauge
+    - counter
+    type: string
+    x-enum-varnames:
+    - Gauge
+    - Counter
+  v2handlers.GetMetricsRequest:
+    properties:
+      metricID:
+        description: Идентификатор метрики
+        example: Alloc
+        type: string
+      metricType:
+        allOf:
+        - $ref: '#/definitions/models.MetricType'
+        description: Тип метрики
+        example: gauge
+    type: object
+  v2handlers.Metrics:
+    properties:
+      delta:
+        description: значение метрики в случае передачи counter
+        example: 5
+        type: integer
+      id:
+        description: идентификатор метрики
+        example: Alloc
+        type: string
+      type:
+        description: параметр, принимающий значение gauge или counter
+        example: gauge
+        type: string
+      value:
+        description: значение метрики в случае передачи gauge
+        example: 12.6
+        type: number
+    type: object
+info:
+  contact: {}
+paths:
+  /:
+    get:
+      description: Запрос на получение всех метрик
+      operationId: getAllMetrics
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            type: string
+      summary: Запрос на получение всех метрик
+      tags:
+      - Metrics_Legacy
+  /ping:
+    get:
+      description: Запрос на проверку соединения с БД.
+      operationId: ping
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            type: string
+      summary: Запрос на проверку соединения с БД.
+      tags:
+      - Database
+  /update:
+    post:
+      consumes:
+      - application/json
+      description: Обновления метрики
+      operationId: updateMetric
+      parameters:
+      - description: Тело запроса
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/v2handlers.Metrics'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v2handlers.Metrics'
+        "400":
+          description: Неверный запрос
+          schema:
+            type: string
+        "404":
+          description: Метрика не найдена
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            type: string
+      summary: Обновления метрики
+      tags:
+      - Metrics
+  /update/{metric_type}/{metric_id}/{metric_value}:
+    post:
+      description: Запрос на обновление метрик
+      operationId: updateMetricLegacy
+      parameters:
+      - description: Тип метрики
+        in: path
+        name: metric_type
+        required: true
+        type: string
+      - description: Идентификатор метрики
+        in: path
+        name: metric_id
+        required: true
+        type: string
+      - description: Значение метрики
+        in: path
+        name: metric_value
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Неверный запрос
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            type: string
+      summary: Запрос на обновление метрик
+      tags:
+      - Metrics_Legacy
+  /updates:
+    post:
+      consumes:
+      - application/json
+      description: Батчевое обновление метрик
+      operationId: updateMetrics
+      parameters:
+      - description: Тело запроса
+        in: body
+        name: payload
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/v2handlers.Metrics'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Неверный запрос
+          schema:
+            type: string
+        "404":
+          description: Метрика не найдена
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            type: string
+      summary: Батчевое обновление метрик
+      tags:
+      - Metrics
+  /value:
+    post:
+      consumes:
+      - application/json
+      description: Получение метрики по ID
+      operationId: getMetric
+      parameters:
+      - description: Тело запроса
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/v2handlers.GetMetricsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v2handlers.Metrics'
+        "400":
+          description: Неверный запрос
+          schema:
+            type: string
+        "404":
+          description: Метрика не найдена
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            type: string
+      summary: Получение метрики
+      tags:
+      - Metrics
+  /value/{metric_type}/{metric_id}:
+    get:
+      description: Запрос на получение метрики по ID
+      operationId: getMetricLegacy
+      parameters:
+      - description: Тип метрики
+        in: path
+        name: metric_type
+        required: true
+        type: string
+      - description: Идентификатор метрики
+        in: path
+        name: metric_id
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "404":
+          description: Метрика не найдена
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            type: string
+      summary: Запрос на получение метрики по ID
+      tags:
+      - Metrics_Legacy
+swagger: "2.0"

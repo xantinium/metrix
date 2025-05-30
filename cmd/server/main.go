@@ -55,33 +55,32 @@ func (emptyDBChecker) Ping(_ context.Context) error {
 }
 
 func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.MetrixServer, cleanUpFunc, error) {
-	if args.DatabaseConnStr != "" {
-		psqlClient, err := postgres.NewPostgresClient(ctx, args.DatabaseConnStr)
+	builder := server.NewMetrixServerBuilder().
+		SetAddr(args.Addr).
+		SetPrivateKey(args.PrivateKey).
+		SetStoreInterval(args.StoreInterval)
+
+	// Если строка подключения к БД отсутствует,
+	// используем in-memory хранилище и моковый DBChecker.
+	if args.DatabaseConnStr == "" {
+		memStorage, err := memstorage.NewMemStorage(args.StoragePath, args.RestoreStorage)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		return server.NewMetrixServer(server.MetrixServerOptions{
-			Addr:          args.Addr,
-			PrivateKey:    args.PrivateKey,
-			StoreInterval: args.StoreInterval,
-			Storage:       psqlClient,
-			DBChecker:     psqlClient,
-		}), psqlClient.Destroy, nil
+		builder.SetStorage(memStorage, new(emptyDBChecker))
+
+		return builder.Build(), memStorage.Destroy, nil
 	}
 
-	memStorage, err := memstorage.NewMemStorage(args.StoragePath, args.RestoreStorage)
+	psqlClient, err := postgres.NewPostgresClient(ctx, args.DatabaseConnStr)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return server.NewMetrixServer(server.MetrixServerOptions{
-		Addr:          args.Addr,
-		PrivateKey:    args.PrivateKey,
-		StoreInterval: args.StoreInterval,
-		Storage:       memStorage,
-		DBChecker:     new(emptyDBChecker),
-	}), memStorage.Destroy, nil
+	builder.SetStorage(psqlClient, psqlClient)
+
+	return builder.Build(), psqlClient.Destroy, nil
 }
 
 func waitForStopSignal() <-chan os.Signal {

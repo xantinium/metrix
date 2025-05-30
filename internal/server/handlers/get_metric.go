@@ -15,6 +15,17 @@ import (
 )
 
 // GetMetricHandler реализация хендлера для получения метрик.
+// @Tags Metrics_Legacy
+// @Summary Запрос на получение метрики по ID
+// @Description Запрос на получение метрики по ID
+// @ID getMetricLegacy
+// @Produce text/plain
+// @Param metric_type path string true "Тип метрики"
+// @Param metric_id path string true "Идентификатор метрики"
+// @Success 200 {string} string
+// @Failure 404 {string} string "Метрика не найдена"
+// @Failure 500 {string} string "Внутренняя ошибка"
+// @Router /value/{metric_type}/{metric_id} [get]
 func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, string, error) {
 	req, err := parseGetMetricRequest(ctx)
 	if err != nil {
