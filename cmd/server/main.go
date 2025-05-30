@@ -55,7 +55,7 @@ func (emptyDBChecker) Ping(_ context.Context) error {
 }
 
 func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.MetrixServer, cleanUpFunc, error) {
-	builer := server.NewMetrixServerBuilder().
+	builder := server.NewMetrixServerBuilder().
 		SetAddr(args.Addr).
 		SetPrivateKey(args.PrivateKey).
 		SetStoreInterval(args.StoreInterval)
@@ -68,9 +68,9 @@ func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.Metri
 			return nil, nil, err
 		}
 
-		builer.SetStorage(memStorage).SetDatabaseChecker(new(emptyDBChecker))
+		builder.SetStorage(memStorage, new(emptyDBChecker))
 
-		return builer.Build(), memStorage.Destroy, nil
+		return builder.Build(), memStorage.Destroy, nil
 	}
 
 	psqlClient, err := postgres.NewPostgresClient(ctx, args.DatabaseConnStr)
@@ -78,9 +78,9 @@ func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.Metri
 		return nil, nil, err
 	}
 
-	builer.SetStorage(psqlClient).SetDatabaseChecker(psqlClient)
+	builder.SetStorage(psqlClient, psqlClient)
 
-	return builer.Build(), psqlClient.Destroy, nil
+	return builder.Build(), psqlClient.Destroy, nil
 }
 
 func waitForStopSignal() <-chan os.Signal {

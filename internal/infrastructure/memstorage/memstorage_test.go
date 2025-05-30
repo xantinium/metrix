@@ -2,8 +2,8 @@ package memstorage_test
 
 import (
 	"context"
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -12,6 +12,8 @@ import (
 )
 
 func TestMemStorage(t *testing.T) {
+	var wg sync.WaitGroup
+
 	ctx := context.Background()
 
 	storage, err := memstorage.NewMemStorage("metrix.db", false)
@@ -23,7 +25,9 @@ func TestMemStorage(t *testing.T) {
 	for range 5 {
 		// Запускаем 5 горутин, каждая устанавливает значение 5.
 		// В итоге ожидаем получить: 5.
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			for range 20 {
 				storage.UpdateGaugeMetric(ctx, "Alloc", 5)
 			}
@@ -31,14 +35,16 @@ func TestMemStorage(t *testing.T) {
 
 		// Запускаем 5 горутин, каждая увеличивает значение на 2.
 		// В итоге ожидаем получить: 5 * 20 * 2.
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			for range 20 {
 				storage.UpdateCounterMetric(ctx, "PollCount", 2)
 			}
 		}()
 	}
 
-	time.Sleep(time.Second)
+	wg.Wait()
 
 	var (
 		gaugeMetric   float64

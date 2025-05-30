@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	_ "net/http/pprof"
+	_ "net/http/pprof" // Используется для корректной работы профилировщика.
 	"time"
 
 	"github.com/mailru/easyjson"
@@ -63,18 +63,10 @@ type MetrixAgent struct {
 func (agent *MetrixAgent) Run(ctx context.Context) {
 	agent.metricsSource.Run(ctx)
 	agent.workerPool.Run(ctx)
-	if agent.isProfilingEnabled {
-		agent.runProfilingServer()
-	}
-}
 
-func (agent *MetrixAgent) runProfilingServer() {
-	go func() {
-		err := http.ListenAndServe(":9090", nil)
-		if err != nil {
-			logger.Errorf("failed to start pprof server: %v", err)
-		}
-	}()
+	if agent.isProfilingEnabled {
+		tools.RunProfilingServer()
+	}
 }
 
 // UpdateMetrics обновляет метрики на сервере.

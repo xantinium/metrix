@@ -5,16 +5,16 @@ package server
 import (
 	"context"
 	"net/http"
-	_ "net/http/pprof"
+	_ "net/http/pprof" // Используется для корректной работы профилировщика.
 	"time"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/repository/metrics"
 	"github.com/xantinium/metrix/internal/server/handlers"
 	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
 	"github.com/xantinium/metrix/internal/server/middlewares"
+	"github.com/xantinium/metrix/internal/tools"
 )
 
 func init() {
@@ -79,16 +79,11 @@ func (b *MetrixServerBuilder) EnabledProfiling() *MetrixServerBuilder {
 	return b
 }
 
-// SetDatabaseChecker устанавливает сущность для проверки
-// состояния базы данных.
-func (b *MetrixServerBuilder) SetDatabaseChecker(checker metrics.DatabaseChecker) *MetrixServerBuilder {
-	b.dbChecker = checker
-	return b
-}
-
 // SetStorage устанавливает базу данных для хранения метрик.
-func (b *MetrixServerBuilder) SetStorage(storage metrics.MetricsStorage) *MetrixServerBuilder {
+// Также, устанавливает сущность для проверки соединения с БД.
+func (b *MetrixServerBuilder) SetStorage(storage metrics.MetricsStorage, checker metrics.DatabaseChecker) *MetrixServerBuilder {
 	b.storage = storage
+	b.dbChecker = checker
 	return b
 }
 
@@ -135,7 +130,7 @@ type MetrixServer struct {
 // Run запускает сервер метрик.
 func (s *MetrixServer) Run() chan error {
 	if s.isProfilingEnabled {
-		s.runProfilingServer()
+		tools.RunProfilingServer()
 	}
 
 	errChan := make(chan error, 1)
@@ -153,15 +148,6 @@ func (s *MetrixServer) Run() chan error {
 	s.worker.Run()
 
 	return errChan
-}
-
-func (s *MetrixServer) runProfilingServer() {
-	go func() {
-		err := http.ListenAndServe(":9090", nil)
-		if err != nil {
-			logger.Errorf("failed to start pprof server: %v", err)
-		}
-	}()
 }
 
 // Stop останавливает сервер метрик.
