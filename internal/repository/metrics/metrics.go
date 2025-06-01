@@ -1,4 +1,4 @@
-// Пакет metrics содержит репозиторий для работы с метриками.
+// Package metrics содержит репозиторий для работы с метриками.
 package metrics
 
 import (
@@ -13,8 +13,8 @@ import (
 type MetricsRepositoryOptions struct {
 	Storage MetricsStorage
 	// SyncMetrics нужно ли сохранять метрики после каждой мутации.
-	SyncMetrics bool
 	DBChecker   DatabaseChecker
+	SyncMetrics bool
 }
 
 // NewMetricsRepository создаёт новый репозиторий метрик.
@@ -29,8 +29,8 @@ func NewMetricsRepository(opts MetricsRepositoryOptions) *MetricsRepository {
 // MetricsRepository структура, описывающая репозиторий метрик.
 type MetricsRepository struct {
 	storage     MetricsStorage
-	syncMetrics bool
 	dbChecker   DatabaseChecker
+	syncMetrics bool
 }
 
 // GetGaugeMetric возвращает метрику типа Gauge по идентификатору id.

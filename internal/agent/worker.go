@@ -12,10 +12,10 @@ type uploadFuncT = func()
 
 // MetrixAgentWorkerPoolOptions параметры для пула воркеров.
 type MetrixAgentWorkerPoolOptions struct {
-	PoolSize        int
-	ReportInterval  time.Duration // интервал между запросами на выгрузку метрик (сек).
-	ReportRateLimit int           // количество одновременных запросов.
 	UploadFunc      uploadFuncT
+	ReportInterval  time.Duration // интервал между запросами на выгрузку метрик (сек).
+	PoolSize        int
+	ReportRateLimit int // количество одновременных запросов.
 }
 
 // NewMetrixAgentWorkerPool создаёт новый пул воркеров для агента метрик.
@@ -31,10 +31,10 @@ func NewMetrixAgentWorkerPool(opts MetrixAgentWorkerPoolOptions) *MetrixAgentWor
 // MetrixAgentWorkerPool структура, описывающая пул воркеров
 // для периодической выгрузки метрик на сервер.
 type MetrixAgentWorkerPool struct {
-	sm             *tools.Semaphore
-	poolSize       int
-	reportInterval time.Duration
 	uploadFunc     uploadFuncT
+	sm             *tools.Semaphore
+	reportInterval time.Duration
+	poolSize       int
 }
 
 // Log логирует события воркеров.

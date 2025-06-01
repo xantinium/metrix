@@ -1,4 +1,4 @@
-// Пакет runtimemetrics содержит реализацию источника метрик.
+// Package runtimemetrics содержит реализацию источника метрик.
 // На данный момент, метрики предоставляет пакеты runtime и gopsutil.
 package runtimemetrics
 
@@ -30,10 +30,10 @@ func NewRuntimeMetricsSource(pollInterval int) *RuntimeMetricsSource {
 
 // RuntimeMetricsSource структура, реализующая источник метрик.
 type RuntimeMetricsSource struct {
+	metricsSnapshot map[string]models.MetricInfo
 	mx              sync.RWMutex
 	pollInterval    time.Duration
 	snapshotsCount  int64 // учитывает только основные метрики
-	metricsSnapshot map[string]models.MetricInfo
 }
 
 // Log логирует события источника метрик.

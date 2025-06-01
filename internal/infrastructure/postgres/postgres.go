@@ -1,3 +1,4 @@
+// Package postgres содержит клиент для работы с СУБД PostgreSQL.
 package postgres
 
 import (

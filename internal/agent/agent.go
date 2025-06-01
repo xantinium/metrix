@@ -1,4 +1,4 @@
-// Пакет agent содержит реализацию агента для сбора метрик.
+// Package agent содержит реализацию агента для сбора метрик.
 package agent
 
 import (
@@ -51,12 +51,12 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 
 // MetrixAgent структура, описывающая агент метрик.
 type MetrixAgent struct {
-	serverAddr         string
-	privateKey         string
-	isProfilingEnabled bool
 	workerPool         *MetrixAgentWorkerPool
 	metricsSource      *runtimemetrics.RuntimeMetricsSource
 	retrier            *tools.Retrier
+	serverAddr         string
+	privateKey         string
+	isProfilingEnabled bool
 }
 
 // Run запускает агента метрик.
@@ -202,10 +202,10 @@ func (agent MetrixAgent) getUpdateMetricBatchHandlerURL() string {
 
 //easyjson:json
 type Metrics struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
 	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
 }
 
 //easyjson:json

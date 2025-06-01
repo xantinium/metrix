@@ -1,3 +1,5 @@
+// Package logger содержит логгер, пригодный для использования
+// в приложении. Поддерживает уровни логирования и структурированный вывод.
 package logger
 
 import (
@@ -33,8 +35,8 @@ func Destroy() {
 }
 
 type Field struct {
-	Name  string
 	Value any
+	Name  string
 }
 
 // Info пишет структурированный лог уровня INFO.

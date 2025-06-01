@@ -25,9 +25,9 @@ func NewMetrixServerWorker(storeInterval time.Duration, metricsSaver MetricsSave
 // MetrixServerWorker структура, описывающая воркер
 // для периодического сохранения метрик.
 type MetrixServerWorker struct {
+	metricsSaver  MetricsSaver
 	stopFunc      context.CancelFunc
 	storeInterval time.Duration
-	metricsSaver  MetricsSaver
 }
 
 // Run запускает воркер.

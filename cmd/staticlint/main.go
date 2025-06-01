@@ -1,6 +1,9 @@
 // Пакет main содержит сборку анализаторов,
 // которым должен удовлетворять код в репозитории.
 //
+// Для прогона необходимо выполнить специальный скрипт link.sh,
+// расположенный в корне репозитория.
+//
 // Используются следующие анализаторы:
 //
 //   - cтандартные анализаторы из golang.org/x/tools/go/analysis/passes;
@@ -12,7 +15,7 @@ package main
 import (
 	"strings"
 
-	"github.com/quasilyte/go-ruleguard/analyzer"
+	"github.com/go-critic/go-critic/checkers/analyzer"
 	"github.com/timakin/bodyclose/passes/bodyclose"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"

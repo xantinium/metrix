@@ -11,8 +11,8 @@ func TestMetrixAgent_GetUpdateMetricHandlerUrl(t *testing.T) {
 	tests := []struct {
 		name       string
 		serverAddr string
-		metric     models.MetricInfo
 		want       string
+		metric     models.MetricInfo
 	}{
 		{
 			name:       "Создание URL-адреса для метрики типа Gauge",

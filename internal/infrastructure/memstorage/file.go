@@ -54,9 +54,9 @@ func (storage *MemStorage) SaveMetrics(ctx context.Context) error {
 }
 
 type fileWriter struct {
+	path string
 	mx   sync.Mutex
 	wg   sync.WaitGroup
-	path string
 }
 
 func (w *fileWriter) Write(data []byte) error {

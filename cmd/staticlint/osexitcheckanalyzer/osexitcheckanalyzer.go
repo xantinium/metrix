@@ -1,4 +1,4 @@
-// Пакет osexitcheckanalyzer содержит кастомный
+// Package osexitcheckanalyzer содержит кастомный
 // анализатор для проверки прямых вызовов [os.Exit]
 // в функции main пакета main.
 package osexitcheckanalyzer

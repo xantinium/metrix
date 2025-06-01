@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -55,13 +56,13 @@ func TestMetricsRepository_UpdateMetric(t *testing.T) {
 	}
 
 	for _, oper := range updateOperations {
-		var err error
-
 		switch oper.metricType {
 		case models.Gauge:
 			_, err = repo.UpdateGaugeMetric(ctx, oper.metricID, oper.metricValue)
 		case models.Counter:
 			_, err = repo.UpdateCounterMetric(ctx, oper.metricID, int64(oper.metricValue))
+		default:
+			err = fmt.Errorf("unknown metric type %q", oper.metricType)
 		}
 
 		require.NoError(t, err)
