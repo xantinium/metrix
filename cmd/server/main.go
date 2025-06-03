@@ -11,9 +11,22 @@ import (
 	"github.com/xantinium/metrix/internal/infrastructure/postgres"
 	"github.com/xantinium/metrix/internal/logger"
 	"github.com/xantinium/metrix/internal/server"
+	"github.com/xantinium/metrix/internal/tools"
+)
+
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
 )
 
 func main() {
+	tools.PrintBuildInfo(tools.BuildInfo{
+		BuildVersion: buildVersion,
+		BuildDate:    buildDate,
+		BuildCommit:  buildCommit,
+	})
+
 	ctx := context.Background()
 	args := config.ParseServerArgs()
 

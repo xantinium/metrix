@@ -9,9 +9,22 @@ import (
 	"github.com/xantinium/metrix/internal/agent"
 	"github.com/xantinium/metrix/internal/config"
 	"github.com/xantinium/metrix/internal/logger"
+	"github.com/xantinium/metrix/internal/tools"
+)
+
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
 )
 
 func main() {
+	tools.PrintBuildInfo(tools.BuildInfo{
+		BuildVersion: buildVersion,
+		BuildDate:    buildDate,
+		BuildCommit:  buildCommit,
+	})
+
 	args := config.ParseAgentArgs()
 
 	logger.Init(args.IsDev)
