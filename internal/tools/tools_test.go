@@ -11,8 +11,8 @@ import (
 
 func TestFloatToStr(t *testing.T) {
 	tests := []struct {
-		value float64
 		want  string
+		value float64
 	}{
 		{
 			value: 0,
@@ -38,8 +38,8 @@ func TestFloatToStr(t *testing.T) {
 
 func TestIntToStr(t *testing.T) {
 	tests := []struct {
-		value int64
 		want  string
+		value int64
 	}{
 		{
 			value: 0,

@@ -1,4 +1,4 @@
-// Пакет memstorage содержит реализацию хранилища метрик,
+// Package memstorage содержит реализацию хранилища метрик,
 // все данные которого хранятся в оперативной памяти.
 // Дополнительно, имеется возможность записи/чтения метрик из файла.
 package memstorage
@@ -38,10 +38,10 @@ func NewMemStorage(path string, restore bool) (*MemStorage, error) {
 
 // MemStorage структура, реализующая хранилище метрик.
 type MemStorage struct {
-	mx             sync.RWMutex
-	fileW          *fileWriter
 	gaugeMetrics   map[string]float64
 	counterMetrics map[string]int64
+	fileW          *fileWriter
+	mx             sync.RWMutex
 }
 
 func (storage *MemStorage) restore(path string) error {

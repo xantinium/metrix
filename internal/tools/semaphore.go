@@ -30,7 +30,7 @@ func (s *Semaphore) Acquire() {
 	}
 }
 
-// Acquire уменьшает значение семафора на 1.
+// Release уменьшает значение семафора на 1.
 func (s *Semaphore) Release() {
 	if s.ch != nil {
 		<-s.ch

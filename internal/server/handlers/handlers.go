@@ -1,4 +1,4 @@
-// Пакет handlers содержит хендлеры всех HTTP-запросов.
+// Package handlers содержит хендлеры всех HTTP-запросов.
 package handlers
 
 import (

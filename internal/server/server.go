@@ -1,4 +1,4 @@
-// Пакет server содержит реализацю HTTP-сервера, использующий
+// Package server содержит реализацю HTTP-сервера, использующий
 // http.ServeMux для обработки HTTP-запросов.
 package server
 
@@ -40,12 +40,12 @@ func (server *internalMetrixServer) GetMetricsRepo() *metrics.MetricsRepository 
 
 // MetrixServerBuilder билдер для создания сервера метрик.
 type MetrixServerBuilder struct {
+	dbChecker          metrics.DatabaseChecker
+	storage            metrics.MetricsStorage
 	addr               string
 	privateKey         string
 	storeInterval      time.Duration
 	isProfilingEnabled bool
-	dbChecker          metrics.DatabaseChecker
-	storage            metrics.MetricsStorage
 }
 
 // NewMetrixServerBuilder создаёт новый билдер сервера метрик.

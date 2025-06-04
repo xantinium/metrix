@@ -1,4 +1,4 @@
-// Пакет config содержит структуры для конфигурации
+// Package config содержит структуры для конфигурации
 // агента и сервера.
 package config
 
@@ -16,13 +16,13 @@ import (
 // ServerArgs структура, описывающая аргументы сервера.
 type ServerArgs struct {
 	Addr               string
+	StoragePath        string
+	PrivateKey         string
+	DatabaseConnStr    string
+	StoreInterval      time.Duration
 	IsDev              bool
 	IsProfilingEnabled bool
-	PrivateKey         string
-	StoreInterval      time.Duration
-	StoragePath        string
 	RestoreStorage     bool
-	DatabaseConnStr    string
 }
 
 // ParseServerArgs парсит агрументы командной строки в ServerArgs.
@@ -79,10 +79,10 @@ func ParseServerArgs() ServerArgs {
 type serverEnvArgs struct {
 	Addr            tools.StrEnvVar
 	PrivateKey      tools.StrEnvVar
-	StoreInterval   tools.IntEnvVar
 	StoragePath     tools.StrEnvVar
-	RestoreStorage  tools.BoolEnvVar
 	DatabaseConnStr tools.StrEnvVar
+	StoreInterval   tools.IntEnvVar
+	RestoreStorage  tools.BoolEnvVar
 }
 
 // parseServerArgsFromEnv парсит переменные окружения в serverEnvArgs.

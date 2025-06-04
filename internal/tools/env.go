@@ -28,8 +28,8 @@ func GetIntFromEnv(name string) IntEnvVar {
 
 // StrEnvVar переменная окружения тип string.
 type StrEnvVar struct {
-	Exists bool
 	Value  string
+	Exists bool
 }
 
 // GetStrFromEnv достаёт переменную окружения типа string.

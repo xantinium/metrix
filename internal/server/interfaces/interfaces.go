@@ -1,3 +1,4 @@
+// Package interfaces содержит интерфейс http-сервера.
 package interfaces
 
 import (
