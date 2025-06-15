@@ -1,6 +1,8 @@
 package tools_test
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"testing"
 
@@ -166,6 +168,37 @@ func TestCompression(t *testing.T) {
 
 		var got []byte
 		got, err = tools.Decompress(compressedData)
+		require.NoError(t, err)
+
+		require.Equal(t, tt.data, got)
+	}
+}
+
+func TestCrypto(t *testing.T) {
+	key := make([]byte, 32)
+	_, err := rand.Read(key)
+	require.NoError(t, err)
+
+	tests := []struct {
+		data []byte
+	}{
+		{
+			data: []byte{},
+		},
+		{
+			data: []byte("some value"),
+		},
+		{
+			data: []byte(`{"id":"Alloc","value":12.5}`),
+		},
+	}
+
+	for _, tt := range tests {
+		encryptedData, err := tools.Encrypt(hex.EncodeToString(key), tt.data)
+		require.NoError(t, err)
+
+		var got []byte
+		got, err = tools.Decrypt(hex.EncodeToString(key), encryptedData)
 		require.NoError(t, err)
 
 		require.Equal(t, tt.data, got)

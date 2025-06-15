@@ -18,6 +18,7 @@ type ServerArgs struct {
 	Addr               string
 	StoragePath        string
 	PrivateKey         string
+	CryptoPrivateKey   string
 	DatabaseConnStr    string
 	StoreInterval      time.Duration
 	IsDev              bool
@@ -32,6 +33,7 @@ func ParseServerArgs() ServerArgs {
 	isDev := flag.Bool("dev", false, "is metrix server running in development mode")
 	isProfilingEnabled := flag.Bool("profile", false, "is profiling via pprof enabled")
 	privateKey := flag.String("k", "", "key for hash funcs")
+	cryptoPrivateKey := flag.String("crypto-key", "", "private key for crypto funcs in HEX")
 	storeInterval := flag.Int("i", 300, "interval (in seconds) of writing metrics into file")
 	storagePath := flag.String("f", "./metrix.db", "path to file for metrics writing")
 	restoreStorage := flag.Bool("r", true, "read metrics from file on start")
@@ -43,6 +45,7 @@ func ParseServerArgs() ServerArgs {
 		Addr:               address.String(),
 		IsDev:              *isDev,
 		PrivateKey:         *privateKey,
+		CryptoPrivateKey:   *cryptoPrivateKey,
 		StoragePath:        *storagePath,
 		RestoreStorage:     *restoreStorage,
 		DatabaseConnStr:    *databaseConnStr,
@@ -59,6 +62,9 @@ func ParseServerArgs() ServerArgs {
 	}
 	if envArgs.PrivateKey.Exists {
 		args.PrivateKey = envArgs.PrivateKey.Value
+	}
+	if envArgs.CryptoPrivateKey.Exists {
+		args.CryptoPrivateKey = envArgs.CryptoPrivateKey.Value
 	}
 	if envArgs.StoreInterval.Exists && envArgs.StoreInterval.Value >= 0 {
 		args.StoreInterval = time.Duration(envArgs.StoreInterval.Value) * time.Second
@@ -77,23 +83,25 @@ func ParseServerArgs() ServerArgs {
 }
 
 type serverEnvArgs struct {
-	Addr            tools.StrEnvVar
-	PrivateKey      tools.StrEnvVar
-	StoragePath     tools.StrEnvVar
-	DatabaseConnStr tools.StrEnvVar
-	StoreInterval   tools.IntEnvVar
-	RestoreStorage  tools.BoolEnvVar
+	Addr             tools.StrEnvVar
+	PrivateKey       tools.StrEnvVar
+	CryptoPrivateKey tools.StrEnvVar
+	StoragePath      tools.StrEnvVar
+	DatabaseConnStr  tools.StrEnvVar
+	StoreInterval    tools.IntEnvVar
+	RestoreStorage   tools.BoolEnvVar
 }
 
 // parseServerArgsFromEnv парсит переменные окружения в serverEnvArgs.
 func parseServerArgsFromEnv() serverEnvArgs {
 	return serverEnvArgs{
-		Addr:            tools.GetStrFromEnv("ADDRESS"),
-		PrivateKey:      tools.GetStrFromEnv("KEY"),
-		StoreInterval:   tools.GetIntFromEnv("STORE_INTERVAL"),
-		StoragePath:     tools.GetStrFromEnv("FILE_STORAGE_PATH"),
-		RestoreStorage:  tools.GetBoolFromEnv("RESTORE"),
-		DatabaseConnStr: tools.GetStrFromEnv("DATABASE_DSN"),
+		Addr:             tools.GetStrFromEnv("ADDRESS"),
+		PrivateKey:       tools.GetStrFromEnv("KEY"),
+		CryptoPrivateKey: tools.GetStrFromEnv("CRYPTO_KEY"),
+		StoreInterval:    tools.GetIntFromEnv("STORE_INTERVAL"),
+		StoragePath:      tools.GetStrFromEnv("FILE_STORAGE_PATH"),
+		RestoreStorage:   tools.GetBoolFromEnv("RESTORE"),
+		DatabaseConnStr:  tools.GetStrFromEnv("DATABASE_DSN"),
 	}
 }
 
@@ -101,6 +109,7 @@ func parseServerArgsFromEnv() serverEnvArgs {
 type AgentArgs struct {
 	Addr               string
 	PrivateKey         string
+	CryptoPublicKey    string
 	PollInterval       int
 	ReportInterval     time.Duration
 	ReportRateLimit    int
@@ -113,6 +122,7 @@ func ParseAgentArgs() AgentArgs {
 	address := new(NetAddress)
 	flag.Var(address, "a", "address of metrix server in form <host:port>")
 	privateKey := flag.String("k", "", "key for hash funcs")
+	cryptoPublicKey := flag.String("crypto-key", "", "public key for crypto funcs in HEX")
 	pollInterval := flag.Int("p", 2, "poll interval (in sec)")
 	reportInterval := flag.Int("r", 2, "report interval (in sec)")
 	reportRateLimit := flag.Int("l", 0, "rate limit for simultaneous reports (0 = no limit)")
@@ -124,6 +134,7 @@ func ParseAgentArgs() AgentArgs {
 	args := AgentArgs{
 		Addr:               address.String(),
 		PrivateKey:         *privateKey,
+		CryptoPublicKey:    *cryptoPublicKey,
 		PollInterval:       *pollInterval,
 		ReportRateLimit:    *reportRateLimit,
 		IsDev:              *isDev,
@@ -141,6 +152,9 @@ func ParseAgentArgs() AgentArgs {
 	if envArgs.PrivateKey.Exists {
 		args.PrivateKey = envArgs.PrivateKey.Value
 	}
+	if envArgs.CryptoPublicKey.Exists {
+		args.PrivateKey = envArgs.CryptoPublicKey.Value
+	}
 	if envArgs.PollInterval.Exists && envArgs.PollInterval.Value > 0 {
 		args.PollInterval = envArgs.PollInterval.Value
 	}
@@ -157,6 +171,7 @@ func ParseAgentArgs() AgentArgs {
 type agentEnvArgs struct {
 	Addr            tools.StrEnvVar
 	PrivateKey      tools.StrEnvVar
+	CryptoPublicKey tools.StrEnvVar
 	PollInterval    tools.IntEnvVar
 	ReportInterval  tools.IntEnvVar
 	ReportRateLimit tools.IntEnvVar
@@ -167,6 +182,7 @@ func parseAgentArgsFromEnv() agentEnvArgs {
 	return agentEnvArgs{
 		Addr:            tools.GetStrFromEnv("ADDRESS"),
 		PrivateKey:      tools.GetStrFromEnv("KEY"),
+		CryptoPublicKey: tools.GetStrFromEnv("CRYPTO_KEY"),
 		PollInterval:    tools.GetIntFromEnv("POLL_INTERVAL"),
 		ReportInterval:  tools.GetIntFromEnv("REPORT_INTERVAL"),
 		ReportRateLimit: tools.GetIntFromEnv("RATE_LIMIT"),

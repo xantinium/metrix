@@ -44,6 +44,7 @@ type MetrixServerBuilder struct {
 	storage            metrics.MetricsStorage
 	addr               string
 	privateKey         string
+	cryptoPrivateKey   string
 	storeInterval      time.Duration
 	isProfilingEnabled bool
 }
@@ -63,6 +64,13 @@ func (b *MetrixServerBuilder) SetAddr(addr string) *MetrixServerBuilder {
 // используемый в алгоритмах хеширования.
 func (b *MetrixServerBuilder) SetPrivateKey(key string) *MetrixServerBuilder {
 	b.privateKey = key
+	return b
+}
+
+// SetCryptoPrivateKey устанавливает приватный ключ,
+// используемый в алгоритмах шифрования.
+func (b *MetrixServerBuilder) SetCryptoPrivateKey(key string) *MetrixServerBuilder {
+	b.cryptoPrivateKey = key
 	return b
 }
 
@@ -89,7 +97,7 @@ func (b *MetrixServerBuilder) SetStorage(storage metrics.MetricsStorage, checker
 
 func (b *MetrixServerBuilder) Build() *MetrixServer {
 	router := gin.New()
-	applyMiddlewares(router, b.privateKey)
+	applyMiddlewares(router, b.privateKey, b.cryptoPrivateKey)
 
 	internalServer := &internalMetrixServer{
 		router: router,
@@ -162,11 +170,14 @@ func (s *MetrixServer) Stop() error {
 	return s.server.Shutdown(ctx)
 }
 
-func applyMiddlewares(router *gin.Engine, privateKey string) {
+func applyMiddlewares(router *gin.Engine, privateKey, cryptoPrivateKey string) {
 	mw := []gin.HandlerFunc{gin.Recovery()}
 
 	if privateKey != "" {
 		mw = append(mw, middlewares.HashCheckMiddleware(privateKey))
+	}
+	if cryptoPrivateKey != "" {
+		mw = append(mw, middlewares.DecryptMiddleware(cryptoPrivateKey))
 	}
 	mw = append(mw, middlewares.CompressMiddleware())
 	if privateKey != "" {

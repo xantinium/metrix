@@ -5,9 +5,13 @@ package tools
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"strconv"
 )
 
@@ -85,4 +89,64 @@ func CalcSHA256(value []byte, key string) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+// Encrypt шифрует сообщение при помощи алгоритма AES
+// с использованием переданного публичного ключа.
+func Encrypt(publicKey string, message []byte) ([]byte, error) {
+	gcm, nonce, err := getCryptoArgs(publicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	result := gcm.Seal(nonce, nonce, message, nil)
+
+	return result, nil
+}
+
+// Decrypt дешифрует сообщение при помощи алгоритма AES
+// с использованием переданного приватного ключа.
+func Decrypt(privateKey string, message []byte) ([]byte, error) {
+	gcm, _, err := getCryptoArgs(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []byte
+	result, err = gcm.Open(nil, message[:gcm.NonceSize()], message[gcm.NonceSize():], nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if result == nil {
+		result = []byte{}
+	}
+
+	return result, nil
+}
+
+func getCryptoArgs(keyStr string) (cipher.AEAD, []byte, error) {
+	key, err := hex.DecodeString(keyStr)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var gcm cipher.AEAD
+	gcm, err = cipher.NewGCM(block)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	_, err = io.ReadFull(rand.Reader, nonce)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return gcm, nonce, nil
 }
