@@ -23,6 +23,7 @@ const agentWorkerPoolSize = 3
 type MetrixAgentOptions struct {
 	ServerAddr         string
 	PrivateKey         string
+	CryptoPublicKey    string
 	PollInterval       int
 	ReportInterval     time.Duration
 	ReportRateLimit    int
@@ -34,6 +35,7 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 	agent := &MetrixAgent{
 		serverAddr:         opts.ServerAddr,
 		privateKey:         opts.PrivateKey,
+		cryptoPublicKey:    opts.CryptoPublicKey,
 		isProfilingEnabled: opts.IsProfilingEnabled,
 		metricsSource:      runtimemetrics.NewRuntimeMetricsSource(opts.PollInterval),
 		retrier:            tools.DefaulRetrier,
@@ -56,6 +58,7 @@ type MetrixAgent struct {
 	retrier            *tools.Retrier
 	serverAddr         string
 	privateKey         string
+	cryptoPublicKey    string
 	isProfilingEnabled bool
 }
 
@@ -141,6 +144,13 @@ func (agent *MetrixAgent) sendV2Request(url string, req easyjson.Marshaler) erro
 	reqBytes, err = tools.Compress(reqBytes)
 	if err != nil {
 		return err
+	}
+
+	if agent.cryptoPublicKey != "" {
+		reqBytes, err = tools.Encrypt(agent.cryptoPublicKey, reqBytes)
+		if err != nil {
+			return err
+		}
 	}
 
 	reqBody := bytes.NewBuffer(reqBytes)

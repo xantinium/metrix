@@ -71,6 +71,7 @@ func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.Metri
 	builder := server.NewMetrixServerBuilder().
 		SetAddr(args.Addr).
 		SetPrivateKey(args.PrivateKey).
+		SetCryptoPrivateKey(args.CryptoPrivateKey).
 		SetStoreInterval(args.StoreInterval)
 
 	// Если строка подключения к БД отсутствует,

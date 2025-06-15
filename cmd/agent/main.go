@@ -33,6 +33,7 @@ func main() {
 	agent := agent.NewMetrixAgent(agent.MetrixAgentOptions{
 		ServerAddr:         args.Addr,
 		PrivateKey:         args.PrivateKey,
+		CryptoPublicKey:    args.CryptoPublicKey,
 		PollInterval:       args.PollInterval,
 		ReportInterval:     args.ReportInterval,
 		ReportRateLimit:    args.ReportRateLimit,
