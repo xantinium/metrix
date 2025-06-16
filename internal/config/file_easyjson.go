@@ -289,12 +289,12 @@ func easyjson8ceb9162DecodeGithubComXantiniumMetrixInternalConfig1(in *jlexer.Le
 		case "crypto_key":
 			if in.IsNull() {
 				in.Skip()
-				out.CryptoPrivateKey = nil
+				out.CryptoPublicKey = nil
 			} else {
-				if out.CryptoPrivateKey == nil {
-					out.CryptoPrivateKey = new(string)
+				if out.CryptoPublicKey == nil {
+					out.CryptoPublicKey = new(string)
 				}
-				*out.CryptoPrivateKey = string(in.String())
+				*out.CryptoPublicKey = string(in.String())
 			}
 		case "poll_interval":
 			if in.IsNull() {
@@ -302,9 +302,9 @@ func easyjson8ceb9162DecodeGithubComXantiniumMetrixInternalConfig1(in *jlexer.Le
 				out.PollInterval = nil
 			} else {
 				if out.PollInterval == nil {
-					out.PollInterval = new(int)
+					out.PollInterval = new(string)
 				}
-				*out.PollInterval = int(in.Int())
+				*out.PollInterval = string(in.String())
 			}
 		case "report_interval":
 			if in.IsNull() {
@@ -381,10 +381,10 @@ func easyjson8ceb9162EncodeGithubComXantiniumMetrixInternalConfig1(out *jwriter.
 	{
 		const prefix string = ",\"crypto_key\":"
 		out.RawString(prefix)
-		if in.CryptoPrivateKey == nil {
+		if in.CryptoPublicKey == nil {
 			out.RawString("null")
 		} else {
-			out.String(string(*in.CryptoPrivateKey))
+			out.String(string(*in.CryptoPublicKey))
 		}
 	}
 	{
@@ -393,7 +393,7 @@ func easyjson8ceb9162EncodeGithubComXantiniumMetrixInternalConfig1(out *jwriter.
 		if in.PollInterval == nil {
 			out.RawString("null")
 		} else {
-			out.Int(int(*in.PollInterval))
+			out.String(string(*in.PollInterval))
 		}
 	}
 	{
