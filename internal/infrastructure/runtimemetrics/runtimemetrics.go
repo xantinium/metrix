@@ -34,6 +34,7 @@ type RuntimeMetricsSource struct {
 	mx              sync.RWMutex
 	pollInterval    time.Duration
 	snapshotsCount  int64 // учитывает только основные метрики
+	disabled        bool
 }
 
 // Log логирует события источника метрик.
@@ -63,7 +64,9 @@ func (source *RuntimeMetricsSource) Run(ctx context.Context) {
 				t.Stop()
 				return
 			case <-t.C:
-				source.DoShapshot()
+				if !source.disabled {
+					source.DoShapshot()
+				}
 			}
 		}
 	}()
@@ -76,10 +79,18 @@ func (source *RuntimeMetricsSource) Run(ctx context.Context) {
 				t.Stop()
 				return
 			case <-t.C:
-				source.DoAdditionalSnapshot(ctx)
+				if !source.disabled {
+					source.DoAdditionalSnapshot(ctx)
+				}
 			}
 		}
 	}()
+}
+
+// Disable отключает источник метрик, запрещая
+// сканировать метрики.
+func (source *RuntimeMetricsSource) Disable() {
+	source.disabled = true
 }
 
 // DoShapshot сканирует метрики и сохраняет их в памяти.

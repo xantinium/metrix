@@ -45,5 +45,7 @@ func main() {
 
 	<-tools.WaitForStopSignal()
 
+	agent.Disable()
+
 	<-time.After(args.ShutdownTimeout)
 }

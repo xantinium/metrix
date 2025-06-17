@@ -72,6 +72,13 @@ func (agent *MetrixAgent) Run(ctx context.Context) {
 	}
 }
 
+// Disable отключает агент, запрещая выполнять
+// новые запросы.
+func (agent *MetrixAgent) Disable() {
+	agent.metricsSource.Disable()
+	agent.workerPool.Disable()
+}
+
 // UpdateMetrics обновляет метрики на сервере.
 func (agent *MetrixAgent) UpdateMetrics() {
 	agent.updateMetricsBatch(agent.metricsSource.GetSnapshot())
