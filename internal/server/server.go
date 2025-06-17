@@ -159,12 +159,12 @@ func (s *MetrixServer) Run() chan error {
 }
 
 // Stop останавливает сервер метрик.
-func (s *MetrixServer) Stop() error {
+func (s *MetrixServer) Stop(timeout time.Duration) error {
 	defer func() {
 		s.worker.Stop()
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	return s.server.Shutdown(ctx)

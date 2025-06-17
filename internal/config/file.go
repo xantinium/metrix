@@ -21,6 +21,7 @@ type serverConfig struct {
 	IsDev              *bool   `json:"is_dev"`
 	IsProfilingEnabled *bool   `json:"is_profiling"`
 	RestoreStorage     *bool   `json:"restore"`
+	ShutdownTimeout    *string `json:"shutdown_timeout"`
 }
 
 // parseServerArgsFromFile парсит файл в optionalServerArgs.
@@ -54,6 +55,10 @@ func parseServerArgsFromFile() optionalServerArgs {
 		if conf.StoreInterval != nil {
 			result.StoreInterval = parseDuration(*conf.StoreInterval)
 		}
+
+		if conf.ShutdownTimeout != nil {
+			result.ShutdownTimeout = parseDuration(*conf.ShutdownTimeout)
+		}
 	}
 
 	return result
@@ -69,6 +74,7 @@ type agentConfig struct {
 	ReportRateLimit    *int    `json:"report_rate_limit"`
 	IsDev              *bool   `json:"is_dev"`
 	IsProfilingEnabled *bool   `json:"is_profiling"`
+	ShutdownTimeout    *string `json:"shutdown_timeout"`
 }
 
 // parseAgentArgsFromFile парсит файл в optionalAgentArgs.
@@ -107,6 +113,10 @@ func parseAgentArgsFromFile() optionalAgentArgs {
 				tmp := int(pollInterval.Seconds())
 				result.PollInterval = &tmp
 			}
+		}
+
+		if conf.ShutdownTimeout != nil {
+			result.ShutdownTimeout = parseDuration(*conf.ShutdownTimeout)
 		}
 	}
 

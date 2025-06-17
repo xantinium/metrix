@@ -39,23 +39,21 @@ func main() {
 	}
 	defer cleanUp(ctx)
 
-	for {
-		select {
-		case err = <-server.Run():
-			if err != nil {
-				logger.Errorf("failed to run metrix server: %v", err)
-				return
-			}
-
-			return
-		case <-waitForStopSignal():
-			err = server.Stop()
-			if err != nil {
-				logger.Errorf("failed to gracefully stop metrix server: %v", err)
-			}
-
+	select {
+	case err = <-server.Run():
+		if err != nil {
+			logger.Errorf("failed to run metrix server: %v", err)
 			return
 		}
+
+		return
+	case <-waitForStopSignal():
+		err = server.Stop(args.ShutdownTimeout)
+		if err != nil {
+			logger.Errorf("failed to gracefully stop metrix server: %v", err)
+		}
+
+		return
 	}
 }
 
@@ -99,7 +97,7 @@ func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.Metri
 
 func waitForStopSignal() <-chan os.Signal {
 	stopChan := make(chan os.Signal, 1)
-	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	return stopChan
 }

@@ -23,6 +23,7 @@ type ServerArgs struct {
 	IsDev              bool
 	IsProfilingEnabled bool
 	RestoreStorage     bool
+	ShutdownTimeout    time.Duration
 }
 
 // ParseServerArgs парсит агрументы командной строки в ServerArgs.
@@ -44,6 +45,7 @@ type AgentArgs struct {
 	ReportRateLimit    int
 	IsDev              bool
 	IsProfilingEnabled bool
+	ShutdownTimeout    time.Duration
 }
 
 // ParseAgentArgs парсит агрументы командной строки в AgentArgs.
@@ -102,6 +104,7 @@ type optionalServerArgs struct {
 	IsDev              *bool
 	IsProfilingEnabled *bool
 	RestoreStorage     *bool
+	ShutdownTimeout    *time.Duration
 }
 
 func mergeServerArgs(argsToMerge ...optionalServerArgs) ServerArgs {
@@ -135,6 +138,9 @@ func mergeServerArgs(argsToMerge ...optionalServerArgs) ServerArgs {
 		if args.RestoreStorage != nil {
 			result.RestoreStorage = *args.RestoreStorage
 		}
+		if args.ShutdownTimeout != nil && *args.ShutdownTimeout >= 0 {
+			result.ShutdownTimeout = *args.ShutdownTimeout
+		}
 	}
 
 	return result
@@ -149,6 +155,7 @@ type optionalAgentArgs struct {
 	ReportRateLimit    *int
 	IsDev              *bool
 	IsProfilingEnabled *bool
+	ShutdownTimeout    *time.Duration
 }
 
 func mergeAgentArgs(argsToMerge ...optionalAgentArgs) AgentArgs {
@@ -178,6 +185,9 @@ func mergeAgentArgs(argsToMerge ...optionalAgentArgs) AgentArgs {
 		}
 		if args.IsProfilingEnabled != nil {
 			result.IsProfilingEnabled = *args.IsProfilingEnabled
+		}
+		if args.ShutdownTimeout != nil && *args.ShutdownTimeout >= 0 {
+			result.ShutdownTimeout = *args.ShutdownTimeout
 		}
 	}
 

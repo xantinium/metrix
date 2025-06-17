@@ -15,6 +15,7 @@ func parseServerArgsFromEnv() optionalServerArgs {
 	storagePath := tools.GetStrFromEnv("FILE_STORAGE_PATH")
 	restoreStorage := tools.GetBoolFromEnv("RESTORE")
 	databaseConnStr := tools.GetStrFromEnv("DATABASE_DSN")
+	shutdownTimeout := tools.GetIntFromEnv("SHUTDOWN_TIMEOUT")
 
 	args := optionalServerArgs{}
 
@@ -40,6 +41,10 @@ func parseServerArgsFromEnv() optionalServerArgs {
 	if databaseConnStr.Exists {
 		args.DatabaseConnStr = &databaseConnStr.Value
 	}
+	if shutdownTimeout.Exists {
+		tmp := time.Duration(shutdownTimeout.Value) * time.Second
+		args.ShutdownTimeout = &tmp
+	}
 
 	return args
 }
@@ -52,6 +57,7 @@ func parseAgentArgsFromEnv() optionalAgentArgs {
 	pollInterval := tools.GetIntFromEnv("POLL_INTERVAL")
 	reportInterval := tools.GetIntFromEnv("REPORT_INTERVAL")
 	reportRateLimit := tools.GetIntFromEnv("RATE_LIMIT")
+	shutdownTimeout := tools.GetIntFromEnv("SHUTDOWN_TIMEOUT")
 
 	args := optionalAgentArgs{}
 
@@ -73,6 +79,10 @@ func parseAgentArgsFromEnv() optionalAgentArgs {
 	}
 	if reportRateLimit.Exists {
 		args.ReportRateLimit = &reportRateLimit.Value
+	}
+	if shutdownTimeout.Exists {
+		tmp := time.Duration(shutdownTimeout.Value) * time.Second
+		args.ShutdownTimeout = &tmp
 	}
 
 	return args

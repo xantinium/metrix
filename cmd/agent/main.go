@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/xantinium/metrix/internal/agent"
 	"github.com/xantinium/metrix/internal/config"
@@ -46,11 +47,13 @@ func main() {
 	agent.Run(ctx)
 
 	<-waitForStopSignal()
+
+	<-time.After(args.ShutdownTimeout)
 }
 
 func waitForStopSignal() <-chan os.Signal {
 	stopChan := make(chan os.Signal, 1)
-	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	return stopChan
 }
