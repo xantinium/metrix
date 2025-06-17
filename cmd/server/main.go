@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/xantinium/metrix/internal/config"
 	"github.com/xantinium/metrix/internal/infrastructure/memstorage"
@@ -47,7 +44,7 @@ func main() {
 		}
 
 		return
-	case <-waitForStopSignal():
+	case <-tools.WaitForStopSignal():
 		err = server.Stop(args.ShutdownTimeout)
 		if err != nil {
 			logger.Errorf("failed to gracefully stop metrix server: %v", err)
@@ -93,11 +90,4 @@ func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.Metri
 	builder.SetStorage(psqlClient, psqlClient)
 
 	return builder.Build(), psqlClient.Destroy, nil
-}
-
-func waitForStopSignal() <-chan os.Signal {
-	stopChan := make(chan os.Signal, 1)
-	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-
-	return stopChan
 }

@@ -12,7 +12,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 )
 
 const (
@@ -149,4 +152,13 @@ func getCryptoArgs(keyStr string) (cipher.AEAD, []byte, error) {
 	}
 
 	return gcm, nonce, nil
+}
+
+// WaitForStopSignal возвращает канал для прослушивания
+// сигнала остановки процесса.
+func WaitForStopSignal() <-chan os.Signal {
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	return stopChan
 }

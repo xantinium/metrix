@@ -126,6 +126,16 @@ func easyjson8ceb9162DecodeGithubComXantiniumMetrixInternalConfig(in *jlexer.Lex
 				}
 				*out.RestoreStorage = bool(in.Bool())
 			}
+		case "shutdown_timeout":
+			if in.IsNull() {
+				in.Skip()
+				out.ShutdownTimeout = nil
+			} else {
+				if out.ShutdownTimeout == nil {
+					out.ShutdownTimeout = new(string)
+				}
+				*out.ShutdownTimeout = string(in.String())
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -219,6 +229,15 @@ func easyjson8ceb9162EncodeGithubComXantiniumMetrixInternalConfig(out *jwriter.W
 			out.RawString("null")
 		} else {
 			out.Bool(bool(*in.RestoreStorage))
+		}
+	}
+	{
+		const prefix string = ",\"shutdown_timeout\":"
+		out.RawString(prefix)
+		if in.ShutdownTimeout == nil {
+			out.RawString("null")
+		} else {
+			out.String(string(*in.ShutdownTimeout))
 		}
 	}
 	out.RawByte('}')
@@ -346,6 +365,16 @@ func easyjson8ceb9162DecodeGithubComXantiniumMetrixInternalConfig1(in *jlexer.Le
 				}
 				*out.IsProfilingEnabled = bool(in.Bool())
 			}
+		case "shutdown_timeout":
+			if in.IsNull() {
+				in.Skip()
+				out.ShutdownTimeout = nil
+			} else {
+				if out.ShutdownTimeout == nil {
+					out.ShutdownTimeout = new(string)
+				}
+				*out.ShutdownTimeout = string(in.String())
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -430,6 +459,15 @@ func easyjson8ceb9162EncodeGithubComXantiniumMetrixInternalConfig1(out *jwriter.
 			out.RawString("null")
 		} else {
 			out.Bool(bool(*in.IsProfilingEnabled))
+		}
+	}
+	{
+		const prefix string = ",\"shutdown_timeout\":"
+		out.RawString(prefix)
+		if in.ShutdownTimeout == nil {
+			out.RawString("null")
+		} else {
+			out.String(string(*in.ShutdownTimeout))
 		}
 	}
 	out.RawByte('}')
