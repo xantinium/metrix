@@ -44,7 +44,7 @@ const baseTemplate = "<html><head><title>Metrix</title></head><body>%s</body></h
 // паттерна pattern. Ожидается, что хендлер вернёт валидную HTML-строку.
 func RegisterHTMLHandler(server interfaces.Server, pattern string, handler httpHandler) {
 	server.GetInternalRouter().Handle(http.MethodGet, pattern, func(ctx *gin.Context) {
-		ctx.Writer.Header().Set(tools.ContentType, "text/html")
+		ctx.Writer.Header().Set(tools.HeaderContentType, "text/html")
 
 		statusCode, response, err := handler(ctx, server)
 		if err != nil {
@@ -91,6 +91,6 @@ func RegisterV2Handler(server interfaces.Server, method string, pattern string, 
 }
 
 func writeJSON(ctx *gin.Context, statusCode int, json []byte) {
-	ctx.Header(tools.ContentType, "application/json; charset=utf-8")
+	ctx.Header(tools.HeaderContentType, "application/json; charset=utf-8")
 	ctx.String(statusCode, string(json))
 }

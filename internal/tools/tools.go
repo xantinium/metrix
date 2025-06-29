@@ -18,13 +18,6 @@ import (
 	"syscall"
 )
 
-const (
-	AcceptEncoding  = "Accept-Encoding"
-	ContentEncoding = "Content-Encoding"
-	ContentType     = "Content-Type"
-	HashSHA256      = "HashSHA256"
-)
-
 // FloatToStr конвертирует float64 в строку.
 func FloatToStr(v float64) string {
 	return strconv.FormatFloat(v, 'f', -1, 64)

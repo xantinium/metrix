@@ -38,23 +38,16 @@ func CompressMiddleware() gin.HandlerFunc {
 	}
 }
 
-const (
-	acceptHeader          = "Accept"
-	acceptEncodingHeader  = "Accept-Encoding"
-	contentTypeHeader     = "Content-Type"
-	contentEncodingHeader = "Content-Encoding"
-)
-
 // isGZIPSupported проверяет поддержку клиентом сжатия в формате gzip.
 func isGZIPSupported(ctx *gin.Context) bool {
-	h := ctx.GetHeader(acceptEncodingHeader)
+	h := ctx.GetHeader(tools.HeaderAcceptEncoding)
 
 	return h != "" && strings.Contains(h, "gzip")
 }
 
 // isRequestCompressed проверяет наличие сжатия запроса в формате gzip.
 func isRequestCompressed(ctx *gin.Context) bool {
-	h := ctx.GetHeader(contentEncodingHeader)
+	h := ctx.GetHeader(tools.HeaderContentEncoding)
 
 	return h != "" && strings.Contains(h, "gzip")
 }
@@ -67,7 +60,7 @@ var supportedMIMETypes = []string{
 // isSupportedMIMEType проверяет заголовоки Accept
 // и Content-Type, т.к. не все типы подлежат сжатию.
 func isSupportedMIMEType(ctx *gin.Context) bool {
-	supported := slices.ContainsFunc(ctx.Request.Header.Values(acceptHeader), func(acceptType string) bool {
+	supported := slices.ContainsFunc(ctx.Request.Header.Values(tools.HeaderAccept), func(acceptType string) bool {
 		for _, mimeType := range supportedMIMETypes {
 			if strings.Contains(acceptType, mimeType) {
 				return true
@@ -80,7 +73,7 @@ func isSupportedMIMEType(ctx *gin.Context) bool {
 		return true
 	}
 
-	return slices.ContainsFunc(ctx.Request.Header.Values(contentTypeHeader), func(contentTypeType string) bool {
+	return slices.ContainsFunc(ctx.Request.Header.Values(tools.HeaderContentType), func(contentTypeType string) bool {
 		for _, mimeType := range supportedMIMETypes {
 			if strings.Contains(contentTypeType, mimeType) {
 				return true
@@ -110,7 +103,7 @@ func (w *compressWriter) Write(p []byte) (int, error) {
 
 func (w *compressWriter) WriteHeader(statusCode int) {
 	if statusCode < 300 {
-		w.ResponseWriter.Header().Set(tools.ContentEncoding, "gzip")
+		w.ResponseWriter.Header().Set(tools.HeaderContentEncoding, "gzip")
 	}
 	w.ResponseWriter.WriteHeader(statusCode)
 }

@@ -15,7 +15,7 @@ import (
 // при помощи хеширования через SHA-256.
 func HashCheckMiddleware(privateKey string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		hashedReq := ctx.GetHeader(tools.HashSHA256)
+		hashedReq := ctx.GetHeader(tools.HeaderHashSHA256)
 		if hashedReq == "" {
 			// По-хорошему, здесь нужно ругаться и завершать обработку запроса,
 			// но мы допускаем отсутствие заголовка с хешем.
@@ -74,7 +74,7 @@ func ResponseHasherMiddleware(privateKey string) gin.HandlerFunc {
 			return
 		}
 
-		ctx.Header(tools.HashSHA256, hashedRes)
+		ctx.Header(tools.HeaderHashSHA256, hashedRes)
 	}
 }
 

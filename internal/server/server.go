@@ -4,6 +4,7 @@ package server
 
 import (
 	"context"
+	"net"
 	"net/http"
 	_ "net/http/pprof" // Используется для корректной работы профилировщика.
 	"time"
@@ -46,6 +47,7 @@ type MetrixServerBuilder struct {
 	privateKey         string
 	cryptoPrivateKey   string
 	storeInterval      time.Duration
+	trustedSubnet      *net.IPNet
 	isProfilingEnabled bool
 }
 
@@ -81,6 +83,13 @@ func (b *MetrixServerBuilder) SetStoreInterval(interval time.Duration) *MetrixSe
 	return b
 }
 
+// SetTrustedSubnet устанавливает доверенную подсеть.
+// Используется на проверке входящих HTTP-запросов.
+func (b *MetrixServerBuilder) SetTrustedSubnet(subnet *net.IPNet) *MetrixServerBuilder {
+	b.trustedSubnet = subnet
+	return b
+}
+
 // EnabledProfiling активирует профилирование.
 func (b *MetrixServerBuilder) EnabledProfiling() *MetrixServerBuilder {
 	b.isProfilingEnabled = true
@@ -97,7 +106,7 @@ func (b *MetrixServerBuilder) SetStorage(storage metrics.MetricsStorage, checker
 
 func (b *MetrixServerBuilder) Build() *MetrixServer {
 	router := gin.New()
-	applyMiddlewares(router, b.privateKey, b.cryptoPrivateKey)
+	applyMiddlewares(router, b.privateKey, b.cryptoPrivateKey, b.trustedSubnet)
 
 	internalServer := &internalMetrixServer{
 		router: router,
@@ -170,9 +179,12 @@ func (s *MetrixServer) Stop(timeout time.Duration) error {
 	return s.server.Shutdown(ctx)
 }
 
-func applyMiddlewares(router *gin.Engine, privateKey, cryptoPrivateKey string) {
+func applyMiddlewares(router *gin.Engine, privateKey, cryptoPrivateKey string, trustedSubnet *net.IPNet) {
 	mw := []gin.HandlerFunc{gin.Recovery()}
 
+	if trustedSubnet != nil {
+		mw = append(mw, middlewares.NetGuardMiddleware(trustedSubnet))
+	}
 	if privateKey != "" {
 		mw = append(mw, middlewares.HashCheckMiddleware(privateKey))
 	}

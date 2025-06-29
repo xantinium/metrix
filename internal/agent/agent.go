@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	_ "net/http/pprof" // Используется для корректной работы профилировщика.
 	"time"
@@ -48,11 +49,21 @@ func NewMetrixAgent(opts MetrixAgentOptions) *MetrixAgent {
 		UploadFunc:      agent.UpdateMetrics,
 	})
 
+	// Получаем IP-адрес, который будет использоваться
+	// в HTTP-запросах. Не уверен, что это правильно, но
+	// пока что так.
+	var err error
+	agent.addr, err = tools.FindLocalIP()
+	if err != nil {
+		logger.Errorf("failet to find local ip: %v", err)
+	}
+
 	return agent
 }
 
 // MetrixAgent структура, описывающая агент метрик.
 type MetrixAgent struct {
+	addr               net.IP
 	workerPool         *MetrixAgentWorkerPool
 	metricsSource      *runtimemetrics.RuntimeMetricsSource
 	retrier            *tools.Retrier
@@ -166,9 +177,12 @@ func (agent *MetrixAgent) sendV2Request(url string, req easyjson.Marshaler) erro
 		return err
 	}
 
-	httpReq.Header.Set(tools.AcceptEncoding, "gzip")
-	httpReq.Header.Set(tools.ContentEncoding, "gzip")
-	httpReq.Header.Set(tools.ContentType, "application/json")
+	httpReq.Header.Set(tools.HeaderAcceptEncoding, "gzip")
+	httpReq.Header.Set(tools.HeaderContentEncoding, "gzip")
+	httpReq.Header.Set(tools.HeaderContentType, "application/json")
+	if agent.addr != nil {
+		httpReq.Header.Set(tools.HeaderXRealIP, agent.addr.String())
+	}
 
 	if agent.privateKey != "" {
 		var hashedReq string
@@ -177,7 +191,7 @@ func (agent *MetrixAgent) sendV2Request(url string, req easyjson.Marshaler) erro
 			return err
 		}
 
-		httpReq.Header.Set(tools.HashSHA256, hashedReq)
+		httpReq.Header.Set(tools.HeaderHashSHA256, hashedReq)
 	}
 
 	agent.retrier.Exec(func() bool {

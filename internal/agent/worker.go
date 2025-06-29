@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
+	"golang.org/x/sync/semaphore"
+
 	"github.com/xantinium/metrix/internal/logger"
-	"github.com/xantinium/metrix/internal/tools"
 )
 
 type uploadFuncT = func()
@@ -21,7 +22,7 @@ type MetrixAgentWorkerPoolOptions struct {
 // NewMetrixAgentWorkerPool создаёт новый пул воркеров для агента метрик.
 func NewMetrixAgentWorkerPool(opts MetrixAgentWorkerPoolOptions) *MetrixAgentWorkerPool {
 	return &MetrixAgentWorkerPool{
-		sm:             tools.NewSemaphore(opts.ReportRateLimit),
+		sm:             semaphore.NewWeighted(int64(opts.ReportRateLimit)),
 		poolSize:       opts.PoolSize,
 		reportInterval: opts.ReportInterval,
 		uploadFunc:     opts.UploadFunc,
@@ -32,7 +33,7 @@ func NewMetrixAgentWorkerPool(opts MetrixAgentWorkerPoolOptions) *MetrixAgentWor
 // для периодической выгрузки метрик на сервер.
 type MetrixAgentWorkerPool struct {
 	uploadFunc     uploadFuncT
-	sm             *tools.Semaphore
+	sm             *semaphore.Weighted
 	reportInterval time.Duration
 	poolSize       int
 	disabled       bool
@@ -78,10 +79,10 @@ func (pool *MetrixAgentWorkerPool) runWorker(ctx context.Context) {
 				return
 			case <-t.C:
 				if !pool.disabled {
-					pool.sm.Acquire()
+					pool.sm.Acquire(ctx, 1)
 					pool.Log(logger.InfoLevel, "uploading metrics...")
 					pool.uploadFunc()
-					pool.sm.Release()
+					pool.sm.Release(1)
 					t.Reset(pool.reportInterval)
 				}
 			}
