@@ -35,6 +35,7 @@ type MetrixAgentWorkerPool struct {
 	sm             *tools.Semaphore
 	reportInterval time.Duration
 	poolSize       int
+	disabled       bool
 }
 
 // Log логирует события воркеров.
@@ -59,6 +60,12 @@ func (pool *MetrixAgentWorkerPool) Run(ctx context.Context) {
 	}
 }
 
+// Disable отключает воркеры, запрещая
+// выполнять uploadFunc.
+func (pool *MetrixAgentWorkerPool) Disable() {
+	pool.disabled = true
+}
+
 func (pool *MetrixAgentWorkerPool) runWorker(ctx context.Context) {
 	t := time.NewTimer(pool.reportInterval)
 
@@ -70,11 +77,13 @@ func (pool *MetrixAgentWorkerPool) runWorker(ctx context.Context) {
 				t.Stop()
 				return
 			case <-t.C:
-				pool.sm.Acquire()
-				pool.Log(logger.InfoLevel, "uploading metrics...")
-				pool.uploadFunc()
-				pool.sm.Release()
-				t.Reset(pool.reportInterval)
+				if !pool.disabled {
+					pool.sm.Acquire()
+					pool.Log(logger.InfoLevel, "uploading metrics...")
+					pool.uploadFunc()
+					pool.sm.Release()
+					t.Reset(pool.reportInterval)
+				}
 			}
 		}
 	}()

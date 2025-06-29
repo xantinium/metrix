@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
+	"time"
 
 	"github.com/xantinium/metrix/internal/agent"
 	"github.com/xantinium/metrix/internal/config"
@@ -33,6 +31,7 @@ func main() {
 	agent := agent.NewMetrixAgent(agent.MetrixAgentOptions{
 		ServerAddr:         args.Addr,
 		PrivateKey:         args.PrivateKey,
+		CryptoPublicKey:    args.CryptoPublicKey,
 		PollInterval:       args.PollInterval,
 		ReportInterval:     args.ReportInterval,
 		ReportRateLimit:    args.ReportRateLimit,
@@ -44,12 +43,9 @@ func main() {
 
 	agent.Run(ctx)
 
-	<-waitForStopSignal()
-}
+	<-tools.WaitForStopSignal()
 
-func waitForStopSignal() <-chan os.Signal {
-	stopChan := make(chan os.Signal, 1)
-	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
+	agent.Disable()
 
-	return stopChan
+	<-time.After(args.ShutdownTimeout)
 }

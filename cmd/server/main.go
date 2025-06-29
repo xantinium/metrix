@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/xantinium/metrix/internal/config"
 	"github.com/xantinium/metrix/internal/infrastructure/memstorage"
@@ -39,23 +36,21 @@ func main() {
 	}
 	defer cleanUp(ctx)
 
-	for {
-		select {
-		case err = <-server.Run():
-			if err != nil {
-				logger.Errorf("failed to run metrix server: %v", err)
-				return
-			}
-
-			return
-		case <-waitForStopSignal():
-			err = server.Stop()
-			if err != nil {
-				logger.Errorf("failed to gracefully stop metrix server: %v", err)
-			}
-
+	select {
+	case err = <-server.Run():
+		if err != nil {
+			logger.Errorf("failed to run metrix server: %v", err)
 			return
 		}
+
+		return
+	case <-tools.WaitForStopSignal():
+		err = server.Stop(args.ShutdownTimeout)
+		if err != nil {
+			logger.Errorf("failed to gracefully stop metrix server: %v", err)
+		}
+
+		return
 	}
 }
 
@@ -71,6 +66,7 @@ func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.Metri
 	builder := server.NewMetrixServerBuilder().
 		SetAddr(args.Addr).
 		SetPrivateKey(args.PrivateKey).
+		SetCryptoPrivateKey(args.CryptoPrivateKey).
 		SetStoreInterval(args.StoreInterval)
 
 	// Если строка подключения к БД отсутствует,
@@ -94,11 +90,4 @@ func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.Metri
 	builder.SetStorage(psqlClient, psqlClient)
 
 	return builder.Build(), psqlClient.Destroy, nil
-}
-
-func waitForStopSignal() <-chan os.Signal {
-	stopChan := make(chan os.Signal, 1)
-	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
-
-	return stopChan
 }
