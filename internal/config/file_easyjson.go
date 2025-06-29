@@ -136,6 +136,16 @@ func easyjson8ceb9162DecodeGithubComXantiniumMetrixInternalConfig(in *jlexer.Lex
 				}
 				*out.ShutdownTimeout = string(in.String())
 			}
+		case "trusted_subnet":
+			if in.IsNull() {
+				in.Skip()
+				out.TrustedSubnet = nil
+			} else {
+				if out.TrustedSubnet == nil {
+					out.TrustedSubnet = new(string)
+				}
+				*out.TrustedSubnet = string(in.String())
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -238,6 +248,15 @@ func easyjson8ceb9162EncodeGithubComXantiniumMetrixInternalConfig(out *jwriter.W
 			out.RawString("null")
 		} else {
 			out.String(string(*in.ShutdownTimeout))
+		}
+	}
+	{
+		const prefix string = ",\"trusted_subnet\":"
+		out.RawString(prefix)
+		if in.TrustedSubnet == nil {
+			out.RawString("null")
+		} else {
+			out.String(string(*in.TrustedSubnet))
 		}
 	}
 	out.RawByte('}')

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"log"
+	"net"
 	"os"
 	"time"
 
@@ -22,6 +23,7 @@ type serverConfig struct {
 	IsProfilingEnabled *bool   `json:"is_profiling"`
 	RestoreStorage     *bool   `json:"restore"`
 	ShutdownTimeout    *string `json:"shutdown_timeout"`
+	TrustedSubnet      *string `json:"trusted_subnet"`
 }
 
 // parseServerArgsFromFile парсит файл в optionalServerArgs.
@@ -58,6 +60,14 @@ func parseServerArgsFromFile() optionalServerArgs {
 
 		if conf.ShutdownTimeout != nil {
 			result.ShutdownTimeout = parseDuration(*conf.ShutdownTimeout)
+		}
+
+		if conf.TrustedSubnet != nil {
+			_, result.TrustedSubnet, err = net.ParseCIDR(*conf.TrustedSubnet)
+			if err != nil {
+				log.Printf("failed to parse trusted subnet: %v\n", err)
+				return result
+			}
 		}
 	}
 

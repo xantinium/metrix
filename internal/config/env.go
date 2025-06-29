@@ -1,6 +1,8 @@
 package config
 
 import (
+	"log"
+	"net"
 	"time"
 
 	"github.com/xantinium/metrix/internal/tools"
@@ -16,6 +18,7 @@ func parseServerArgsFromEnv() optionalServerArgs {
 	restoreStorage := tools.GetBoolFromEnv("RESTORE")
 	databaseConnStr := tools.GetStrFromEnv("DATABASE_DSN")
 	shutdownTimeout := tools.GetIntFromEnv("SHUTDOWN_TIMEOUT")
+	trustedSubnet := tools.GetStrFromEnv("TRUSTED_SUBNET")
 
 	args := optionalServerArgs{}
 
@@ -44,6 +47,13 @@ func parseServerArgsFromEnv() optionalServerArgs {
 	if shutdownTimeout.Exists {
 		tmp := time.Duration(shutdownTimeout.Value) * time.Second
 		args.ShutdownTimeout = &tmp
+	}
+	if trustedSubnet.Exists {
+		var err error
+		_, args.TrustedSubnet, err = net.ParseCIDR(trustedSubnet.Value)
+		if err != nil {
+			log.Printf("failed to parse trusted subnet: %v\n", err)
+		}
 	}
 
 	return args

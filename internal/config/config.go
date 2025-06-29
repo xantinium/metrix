@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net"
 	"strings"
 	"time"
 
@@ -24,6 +25,7 @@ type ServerArgs struct {
 	IsProfilingEnabled bool
 	RestoreStorage     bool
 	ShutdownTimeout    time.Duration
+	TrustedSubnet      *net.IPNet
 }
 
 // ParseServerArgs парсит агрументы командной строки в ServerArgs.
@@ -105,6 +107,7 @@ type optionalServerArgs struct {
 	IsProfilingEnabled *bool
 	RestoreStorage     *bool
 	ShutdownTimeout    *time.Duration
+	TrustedSubnet      *net.IPNet
 }
 
 func mergeServerArgs(argsToMerge ...optionalServerArgs) ServerArgs {
@@ -140,6 +143,9 @@ func mergeServerArgs(argsToMerge ...optionalServerArgs) ServerArgs {
 		}
 		if args.ShutdownTimeout != nil && *args.ShutdownTimeout >= 0 {
 			result.ShutdownTimeout = *args.ShutdownTimeout
+		}
+		if args.TrustedSubnet != nil {
+			result.TrustedSubnet = args.TrustedSubnet
 		}
 	}
 

@@ -2,6 +2,8 @@ package config
 
 import (
 	"flag"
+	"log"
+	"net"
 	"time"
 )
 
@@ -17,6 +19,7 @@ func parseServerArgsFromFlags() optionalServerArgs {
 	storagePath := flag.String("f", "./metrix.db", "path to file for metrics writing")
 	restoreStorage := flag.Bool("r", true, "read metrics from file on start")
 	databaseConnStr := flag.String("d", "", "connection string for postgresql")
+	trustedSubnet := flag.String("t", "", "defines the allowed IP subnet in CIDR notation (e.g., \"192.168.1.0/24\")")
 
 	flag.Parse()
 
@@ -38,6 +41,14 @@ func parseServerArgsFromFlags() optionalServerArgs {
 	if storeInterval != nil {
 		tmp := time.Duration(*storeInterval) * time.Second
 		args.StoreInterval = &tmp
+	}
+
+	if trustedSubnet != nil {
+		var err error
+		_, args.TrustedSubnet, err = net.ParseCIDR(*trustedSubnet)
+		if err != nil {
+			log.Printf("failed to parse trusted subnet: %v\n", err)
+		}
 	}
 
 	return args
