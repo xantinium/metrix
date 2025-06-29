@@ -37,7 +37,7 @@ func newDecryptReader(r io.ReadCloser, privateKey string) *decryptReader {
 }
 
 func (r *decryptReader) Read(p []byte) (int, error) {
-	var message []byte
+	message := make([]byte, len(p))
 	n, err := r.ReadCloser.Read(message)
 	if err != nil {
 		return n, err
