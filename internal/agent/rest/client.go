@@ -1,4 +1,4 @@
-// Package rpc содержит REST-клиент.
+// Package rest содержит REST-клиент.
 package rest
 
 import (

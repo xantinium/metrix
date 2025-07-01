@@ -33,8 +33,8 @@ func New(addr string, trustedSubnet *net.IPNet, repo *metricsRepo.MetricsReposit
 
 // Server структура, описывающая RPC-сервер.
 type Server struct {
-	addr   string
 	server *grpc.Server
+	addr   string
 }
 
 // Run запускает RPC-сервер.
