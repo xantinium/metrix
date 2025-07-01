@@ -3,10 +3,10 @@ package metrics
 import (
 	"context"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/xantinium/metrix/internal/models"
 	"github.com/xantinium/metrix/internal/presentation/rpc/gen"
 )

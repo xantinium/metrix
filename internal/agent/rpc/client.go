@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/xantinium/metrix/internal/agent/rpc/interceptors"
 	"github.com/xantinium/metrix/internal/presentation/rpc/gen"
 )
 
@@ -59,7 +60,25 @@ func (client *Client) Close() {
 }
 
 func (client *Client) connFactory() (*grpc.ClientConn, error) {
-	return grpc.NewClient(client.serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	return grpc.NewClient(
+		client.serverAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(client.prepareInterceptors()...),
+	)
+}
+
+func (client *Client) prepareInterceptors() []grpc.UnaryClientInterceptor {
+	result := []grpc.UnaryClientInterceptor{}
+
+	if client.addr != nil {
+		result = append(result, interceptors.XRealIPInterceptor(client.addr))
+	}
+
+	// TODO: реализовать перехватчики:
+	// 1) HashInterceptor
+	// 2) EncryptInterceptor
+
+	return result
 }
 
 func (client *Client) getMetricsClient() gen.MetricsClient {

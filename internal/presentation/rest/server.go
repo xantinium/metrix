@@ -90,16 +90,21 @@ func applyMiddlewares(router *gin.Engine, privateKey, cryptoPrivateKey string, t
 	if trustedSubnet != nil {
 		mw = append(mw, middlewares.NetGuardMiddleware(trustedSubnet))
 	}
+
 	if privateKey != "" {
 		mw = append(mw, middlewares.HashCheckMiddleware(privateKey))
 	}
+
 	if cryptoPrivateKey != "" {
 		mw = append(mw, middlewares.DecryptMiddleware(cryptoPrivateKey))
 	}
+
 	mw = append(mw, middlewares.CompressMiddleware())
+
 	if privateKey != "" {
 		mw = append(mw, middlewares.ResponseHasherMiddleware(privateKey))
 	}
+
 	mw = append(mw, middlewares.LoggerMiddleware())
 
 	router.Use(mw...)

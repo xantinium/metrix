@@ -110,7 +110,7 @@ func (b *MetrixServerBuilder) Build() *MetrixServer {
 
 	return &MetrixServer{
 		restServer:         rest.New(b.addr, b.privateKey, b.cryptoPrivateKey, b.trustedSubnet, repo),
-		rpcServer:          rpc.New(b.rpcAddr, repo),
+		rpcServer:          rpc.New(b.rpcAddr, b.trustedSubnet, repo),
 		worker:             NewMetrixServerWorker(b.storeInterval, b.storage),
 		isProfilingEnabled: b.isProfilingEnabled,
 		isRPCEnabled:       b.isRPCEnabled,
