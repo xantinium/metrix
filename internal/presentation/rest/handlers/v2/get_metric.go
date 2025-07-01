@@ -11,8 +11,8 @@ import (
 	"github.com/mailru/easyjson"
 
 	"github.com/xantinium/metrix/internal/models"
+	"github.com/xantinium/metrix/internal/presentation/rest/interfaces"
 	"github.com/xantinium/metrix/internal/repository/metrics"
-	"github.com/xantinium/metrix/internal/server/interfaces"
 )
 
 // GetMetricHandler реализация хендлера для получения метрик.
@@ -43,7 +43,7 @@ func GetMetricHandler(ctx *gin.Context, s interfaces.Server) (int, easyjson.Mars
 		return getCounterMetricHandler(ctx, metricsRepo, req.MetricID)
 	default:
 		// Попасть сюда невозможно, из-за валидации запроса.
-		return http.StatusInternalServerError, nil, fmt.Errorf("unknown metric type")
+		return http.StatusInternalServerError, nil, fmt.Errorf("unknown metric type %q", req.MetricType)
 	}
 }
 
@@ -81,8 +81,8 @@ func getCounterMetricHandler(ctx context.Context, repo *metrics.MetricsRepositor
 	}, nil
 }
 
-// GetMetricsRequest запрос на получение метрики.
-type GetMetricsRequest struct {
+// GetMetricRequest запрос на получение метрики.
+type GetMetricRequest struct {
 	// Идентификатор метрики
 	MetricID string `example:"Alloc"`
 	// Тип метрики
@@ -90,32 +90,32 @@ type GetMetricsRequest struct {
 }
 
 // ParseGetMetricRequest парсит запрос на получение метрики.
-func ParseGetMetricRequest(ctx *gin.Context) (GetMetricsRequest, error) {
+func ParseGetMetricRequest(ctx *gin.Context) (GetMetricRequest, error) {
 	var (
 		err       error
 		bodyBytes []byte
 		rawReq    Metrics
-		req       GetMetricsRequest
+		req       GetMetricRequest
 	)
 
 	bodyBytes, err = io.ReadAll(ctx.Request.Body)
 	if err != nil {
-		return GetMetricsRequest{}, err
+		return GetMetricRequest{}, err
 	}
 
 	err = easyjson.Unmarshal(bodyBytes, &rawReq)
 	if err != nil {
-		return GetMetricsRequest{}, err
+		return GetMetricRequest{}, err
 	}
 
 	req.MetricID = rawReq.ID
 	if req.MetricID == "" {
-		return GetMetricsRequest{}, fmt.Errorf("metric id cannot be empty")
+		return GetMetricRequest{}, fmt.Errorf("metric id cannot be empty")
 	}
 
 	req.MetricType, err = parseType(rawReq.MType)
 	if err != nil {
-		return GetMetricsRequest{}, err
+		return GetMetricRequest{}, err
 	}
 
 	return req, nil

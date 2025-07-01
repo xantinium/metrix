@@ -65,10 +65,12 @@ func (emptyDBChecker) Ping(_ context.Context) error {
 func getMetrixServer(ctx context.Context, args config.ServerArgs) (*server.MetrixServer, cleanUpFunc, error) {
 	builder := server.NewMetrixServerBuilder().
 		SetAddr(args.Addr).
+		SetRPCAddr(args.RPCAddr).
 		SetPrivateKey(args.PrivateKey).
 		SetCryptoPrivateKey(args.CryptoPrivateKey).
 		SetStoreInterval(args.StoreInterval).
-		SetTrustedSubnet(args.TrustedSubnet)
+		SetTrustedSubnet(args.TrustedSubnet).
+		SetEnableRPC(args.EnableRPC)
 
 	// Если строка подключения к БД отсутствует,
 	// используем in-memory хранилище и моковый DBChecker.

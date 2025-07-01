@@ -10,7 +10,9 @@ import (
 // parseServerArgsFromFlags парсит флаги в optionalServerArgs.
 func parseServerArgsFromFlags() optionalServerArgs {
 	address := new(netAddress)
+	rpcAddress := new(netAddress)
 	flag.Var(address, "a", "address of metrix server in form <host:port>")
+	flag.Var(rpcAddress, "rpc-a", "address of rpc metrix server in form <host:port>")
 	isDev := flag.Bool("dev", false, "is metrix server running in development mode")
 	isProfilingEnabled := flag.Bool("profile", false, "is profiling via pprof enabled")
 	privateKey := flag.String("k", "", "key for hash funcs")
@@ -20,6 +22,7 @@ func parseServerArgsFromFlags() optionalServerArgs {
 	restoreStorage := flag.Bool("r", true, "read metrics from file on start")
 	databaseConnStr := flag.String("d", "", "connection string for postgresql")
 	trustedSubnet := flag.String("t", "", "defines the allowed IP subnet in CIDR notation (e.g., \"192.168.1.0/24\")")
+	enableRPC := flag.Bool("rpc", false, "enabled RPC-server")
 
 	flag.Parse()
 
@@ -31,11 +34,17 @@ func parseServerArgsFromFlags() optionalServerArgs {
 		IsDev:              isDev,
 		IsProfilingEnabled: isProfilingEnabled,
 		RestoreStorage:     restoreStorage,
+		EnableRPC:          enableRPC,
 	}
 
 	{
 		tmp := address.String()
 		args.Addr = &tmp
+	}
+
+	{
+		tmp := rpcAddress.String()
+		args.RPCAddr = &tmp
 	}
 
 	if storeInterval != nil {
@@ -60,6 +69,7 @@ func parseAgentArgsFromFlags() optionalAgentArgs {
 	flag.Var(address, "a", "address of metrix server in form <host:port>")
 	privateKey := flag.String("k", "", "key for hash funcs")
 	cryptoPublicKey := flag.String("crypto-key", "", "public key for crypto funcs in HEX")
+	requestMethod := flag.String("request-method", "", "method for requests (rest by default)")
 	pollInterval := flag.Int("p", 2, "poll interval (in sec)")
 	reportInterval := flag.Int("r", 2, "report interval (in sec)")
 	reportRateLimit := flag.Int("l", 0, "rate limit for simultaneous reports (0 = no limit)")
@@ -71,6 +81,7 @@ func parseAgentArgsFromFlags() optionalAgentArgs {
 	args := optionalAgentArgs{
 		PrivateKey:         privateKey,
 		CryptoPublicKey:    cryptoPublicKey,
+		RequestMethod:      requestMethod,
 		PollInterval:       pollInterval,
 		ReportRateLimit:    reportRateLimit,
 		IsDev:              isDev,

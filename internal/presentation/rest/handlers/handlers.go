@@ -9,7 +9,7 @@ import (
 	"github.com/mailru/easyjson"
 
 	"github.com/xantinium/metrix/internal/logger"
-	"github.com/xantinium/metrix/internal/server/interfaces"
+	"github.com/xantinium/metrix/internal/presentation/rest/interfaces"
 	"github.com/xantinium/metrix/internal/tools"
 )
 

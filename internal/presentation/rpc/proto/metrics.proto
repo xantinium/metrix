@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package metrics;
+
+option go_package = "github.com/xantinium/metrix/internal/presentation/rpc/gen";
+
+import "google/protobuf/empty.proto";
+
+enum MetricType {
+	GAUGE   = 0;
+	COUNTER = 1;
+}
+
+message Metric {
+    int64      delta  = 1;
+	double     value  = 2;
+	string     id     = 3;
+	MetricType m_type = 4;
+}
+
+service Metrics {
+    rpc GetMetric(GetMetricRequest) returns (GetMetricReply);
+    rpc UpdateMetric(UpdateMetricRequest) returns (UpdateMetricReply);
+    rpc UpdateMetricsBatch(UpdateMetricsBatchRequest) returns (google.protobuf.Empty);
+}
+
+message GetMetricRequest {
+	string     metric_id   = 1;
+	MetricType metric_type = 2;
+}
+
+message GetMetricReply {
+	Metric metric = 1;
+}
+
+message UpdateMetricRequest {
+	Metric metric = 1;
+}
+
+message UpdateMetricReply {
+	Metric metric = 1;
+}
+
+message UpdateMetricsBatchRequest {
+	repeated Metric metrics = 1;
+}

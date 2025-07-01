@@ -10,25 +10,25 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/xantinium/metrix/internal/models"
-	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
+	v2handlers "github.com/xantinium/metrix/internal/presentation/rest/handlers/v2"
 )
 
 func TestParseGetMetricRequest(t *testing.T) {
 	tests := []struct {
 		name    string
 		reqBody string
-		want    v2handlers.GetMetricsRequest
+		want    v2handlers.GetMetricRequest
 		wantErr bool
 	}{
 		{
 			name:    "Валидный json для типа Gauge",
 			reqBody: `{"id":"Alloc","type":"gauge"}`,
-			want:    v2handlers.GetMetricsRequest{MetricID: "Alloc", MetricType: models.Gauge},
+			want:    v2handlers.GetMetricRequest{MetricID: "Alloc", MetricType: models.Gauge},
 		},
 		{
 			name:    "Валидный json для типа Counter",
 			reqBody: `{"id":"PollCount","type":"counter"}`,
-			want:    v2handlers.GetMetricsRequest{MetricID: "PollCount", MetricType: models.Counter},
+			want:    v2handlers.GetMetricRequest{MetricID: "PollCount", MetricType: models.Counter},
 		},
 		{
 			name:    "Невалидный json: пустой id",

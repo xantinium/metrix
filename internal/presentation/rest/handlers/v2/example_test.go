@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
+	v2handlers "github.com/xantinium/metrix/internal/presentation/rest/handlers/v2"
 )
 
 func ExampleGetMetricHandler() {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/xantinium/metrix/internal/server/interfaces"
+	"github.com/xantinium/metrix/internal/presentation/rest/interfaces"
 )
 
 // PingHandler реализация хендлера для проверки соединения с БД.

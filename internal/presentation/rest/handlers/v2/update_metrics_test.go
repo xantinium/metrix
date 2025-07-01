@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/xantinium/metrix/internal/models"
-	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
+	v2handlers "github.com/xantinium/metrix/internal/presentation/rest/handlers/v2"
 )
 
 func TestParseUpdateMetricsRequest(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"github.com/mailru/easyjson"
 
 	"github.com/xantinium/metrix/internal/models"
-	"github.com/xantinium/metrix/internal/server/interfaces"
+	"github.com/xantinium/metrix/internal/presentation/rest/interfaces"
 )
 
 // UpdateMetricsHandler реализация хендлера для батчевого обновления метрик.

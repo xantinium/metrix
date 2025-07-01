@@ -39,10 +39,10 @@ func TestWorker(t *testing.T) {
 	require.Equal(t, int32(expectedIncrementsNum), counter.Load())
 }
 
-func getCounter() (*atomic.Int32, func()) {
+func getCounter() (*atomic.Int32, func(_ context.Context)) {
 	counter := new(atomic.Int32)
 
-	return counter, func() {
+	return counter, func(_ context.Context) {
 		counter.Add(1)
 	}
 }

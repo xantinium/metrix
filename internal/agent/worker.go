@@ -9,7 +9,7 @@ import (
 	"github.com/xantinium/metrix/internal/logger"
 )
 
-type uploadFuncT = func()
+type uploadFuncT = func(ctx context.Context)
 
 // MetrixAgentWorkerPoolOptions параметры для пула воркеров.
 type MetrixAgentWorkerPoolOptions struct {
@@ -81,7 +81,7 @@ func (pool *MetrixAgentWorkerPool) runWorker(ctx context.Context) {
 				if !pool.disabled {
 					pool.sm.Acquire(ctx, 1)
 					pool.Log(logger.InfoLevel, "uploading metrics...")
-					pool.uploadFunc()
+					pool.uploadFunc(ctx)
 					pool.sm.Release(1)
 					t.Reset(pool.reportInterval)
 				}

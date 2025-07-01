@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/xantinium/metrix/internal/models"
-	"github.com/xantinium/metrix/internal/server/interfaces"
+	"github.com/xantinium/metrix/internal/presentation/rest/interfaces"
 	"github.com/xantinium/metrix/internal/tools"
 )
 

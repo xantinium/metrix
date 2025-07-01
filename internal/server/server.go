@@ -1,54 +1,37 @@
-// Package server содержит реализацю HTTP-сервера, использующий
-// http.ServeMux для обработки HTTP-запросов.
+// Package server содержит реализацю сервера метрик.
+//
+// Поддерживается два вида серверов:
+//   - REST;
+//   - RPC.
 package server
 
 import (
 	"context"
 	"net"
-	"net/http"
 	_ "net/http/pprof" // Используется для корректной работы профилировщика.
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
 
+	"github.com/xantinium/metrix/internal/presentation/rest"
+	"github.com/xantinium/metrix/internal/presentation/rpc"
 	"github.com/xantinium/metrix/internal/repository/metrics"
-	"github.com/xantinium/metrix/internal/server/handlers"
-	v2handlers "github.com/xantinium/metrix/internal/server/handlers/v2"
-	"github.com/xantinium/metrix/internal/server/middlewares"
 	"github.com/xantinium/metrix/internal/tools"
 )
 
-func init() {
-	gin.SetMode(gin.ReleaseMode)
-}
-
-// internalMetrixServer внутренняя структура сервера.
-// Является реализацией интерфейса сервера, получаемого хендлерами.
-type internalMetrixServer struct {
-	router      *gin.Engine
-	metricsRepo *metrics.MetricsRepository
-}
-
-// GetInternalRouter возвращает используемый роутер.
-func (server *internalMetrixServer) GetInternalRouter() *gin.Engine {
-	return server.router
-}
-
-// GetMetricsRepo возвращает репозиторий метрик.
-func (server *internalMetrixServer) GetMetricsRepo() *metrics.MetricsRepository {
-	return server.metricsRepo
-}
-
 // MetrixServerBuilder билдер для создания сервера метрик.
 type MetrixServerBuilder struct {
-	dbChecker          metrics.DatabaseChecker
-	storage            metrics.MetricsStorage
+	trustedSubnet *net.IPNet
+	dbChecker     metrics.DatabaseChecker
+	storage       metrics.MetricsStorage
+
 	addr               string
+	rpcAddr            string
 	privateKey         string
 	cryptoPrivateKey   string
 	storeInterval      time.Duration
-	trustedSubnet      *net.IPNet
 	isProfilingEnabled bool
+	isRPCEnabled       bool
 }
 
 // NewMetrixServerBuilder создаёт новый билдер сервера метрик.
@@ -56,9 +39,15 @@ func NewMetrixServerBuilder() *MetrixServerBuilder {
 	return &MetrixServerBuilder{}
 }
 
-// SetAddr устанавливает адрес сервера метрик.
+// SetAddr устанавливает адрес REST-сервера.
 func (b *MetrixServerBuilder) SetAddr(addr string) *MetrixServerBuilder {
 	b.addr = addr
+	return b
+}
+
+// SetRPCAddr устанавливает адрес RPC-сервера.
+func (b *MetrixServerBuilder) SetRPCAddr(addr string) *MetrixServerBuilder {
+	b.rpcAddr = addr
 	return b
 }
 
@@ -90,6 +79,12 @@ func (b *MetrixServerBuilder) SetTrustedSubnet(subnet *net.IPNet) *MetrixServerB
 	return b
 }
 
+// SetEnableRPC активирует RPC-сервер.
+func (b *MetrixServerBuilder) SetEnableRPC(enable bool) *MetrixServerBuilder {
+	b.isRPCEnabled = enable
+	return b
+}
+
 // EnabledProfiling активирует профилирование.
 func (b *MetrixServerBuilder) EnabledProfiling() *MetrixServerBuilder {
 	b.isProfilingEnabled = true
@@ -104,44 +99,31 @@ func (b *MetrixServerBuilder) SetStorage(storage metrics.MetricsStorage, checker
 	return b
 }
 
+// Build завершает создание сервера.
+// Возвращает настроенный экземпляр.
 func (b *MetrixServerBuilder) Build() *MetrixServer {
-	router := gin.New()
-	applyMiddlewares(router, b.privateKey, b.cryptoPrivateKey, b.trustedSubnet)
-
-	internalServer := &internalMetrixServer{
-		router: router,
-		metricsRepo: metrics.NewMetricsRepository(metrics.MetricsRepositoryOptions{
-			Storage:     b.storage,
-			SyncMetrics: b.storeInterval == 0,
-			DBChecker:   b.dbChecker,
-		}),
-	}
-
-	handlers.RegisterHTMLHandler(internalServer, "/", handlers.GetAllMetricHandler)
-	handlers.RegisterHandler(internalServer, http.MethodGet, "/value/:type/:id", handlers.GetMetricHandler)
-	handlers.RegisterHandler(internalServer, http.MethodPost, "/update/:type/:id/:value", handlers.UpdateMetricHandler)
-	handlers.RegisterHandler(internalServer, http.MethodGet, "/ping", handlers.PingHandler)
-	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/value/", v2handlers.GetMetricHandler)
-	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/update/", v2handlers.UpdateMetricHandler)
-	handlers.RegisterV2Handler(internalServer, http.MethodPost, "/updates/", v2handlers.UpdateMetricsHandler)
+	repo := metrics.NewMetricsRepository(metrics.MetricsRepositoryOptions{
+		Storage:     b.storage,
+		DBChecker:   b.dbChecker,
+		SyncMetrics: b.storeInterval == 0,
+	})
 
 	return &MetrixServer{
-		server: &http.Server{
-			Addr:    b.addr,
-			Handler: router,
-		},
-		internalServer:     internalServer,
+		restServer:         rest.New(b.addr, b.privateKey, b.cryptoPrivateKey, b.trustedSubnet, repo),
+		rpcServer:          rpc.New(b.rpcAddr, repo),
 		worker:             NewMetrixServerWorker(b.storeInterval, b.storage),
 		isProfilingEnabled: b.isProfilingEnabled,
+		isRPCEnabled:       b.isRPCEnabled,
 	}
 }
 
 // MetrixServer структура, описывающая сервер метрик.
 type MetrixServer struct {
-	server             *http.Server
-	internalServer     *internalMetrixServer
+	restServer         *rest.Server
+	rpcServer          *rpc.Server
 	worker             *MetrixServerWorker
 	isProfilingEnabled bool
+	isRPCEnabled       bool
 }
 
 // Run запускает сервер метрик.
@@ -153,14 +135,14 @@ func (s *MetrixServer) Run() chan error {
 	errChan := make(chan error, 1)
 
 	go func() {
-		err := s.server.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
-			errChan <- err
-			return
-		}
-
-		errChan <- nil
+		errChan <- s.restServer.Run()
 	}()
+
+	if s.isRPCEnabled {
+		go func() {
+			errChan <- s.rpcServer.Run()
+		}()
+	}
 
 	s.worker.Run()
 
@@ -176,26 +158,16 @@ func (s *MetrixServer) Stop(timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	return s.server.Shutdown(ctx)
-}
+	var group *errgroup.Group
+	group, ctx = errgroup.WithContext(ctx)
 
-func applyMiddlewares(router *gin.Engine, privateKey, cryptoPrivateKey string, trustedSubnet *net.IPNet) {
-	mw := []gin.HandlerFunc{gin.Recovery()}
+	group.Go(func() error {
+		return s.restServer.Stop(ctx)
+	})
 
-	if trustedSubnet != nil {
-		mw = append(mw, middlewares.NetGuardMiddleware(trustedSubnet))
-	}
-	if privateKey != "" {
-		mw = append(mw, middlewares.HashCheckMiddleware(privateKey))
-	}
-	if cryptoPrivateKey != "" {
-		mw = append(mw, middlewares.DecryptMiddleware(cryptoPrivateKey))
-	}
-	mw = append(mw, middlewares.CompressMiddleware())
-	if privateKey != "" {
-		mw = append(mw, middlewares.ResponseHasherMiddleware(privateKey))
-	}
-	mw = append(mw, middlewares.LoggerMiddleware())
+	group.Go(func() error {
+		return s.rpcServer.Stop(ctx)
+	})
 
-	router.Use(mw...)
+	return group.Wait()
 }

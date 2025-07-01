@@ -14,6 +14,7 @@ import (
 //easyjson:json
 type serverConfig struct {
 	Addr               *string `json:"address"`
+	RPCAddr            *string `json:"rpc_address"`
 	StoragePath        *string `json:"store_file"`
 	PrivateKey         *string `json:"key"`
 	CryptoPrivateKey   *string `json:"crypto_key"`
@@ -22,6 +23,7 @@ type serverConfig struct {
 	IsDev              *bool   `json:"is_dev"`
 	IsProfilingEnabled *bool   `json:"is_profiling"`
 	RestoreStorage     *bool   `json:"restore"`
+	EnableRPC          *bool   `json:"enable_rpc"`
 	ShutdownTimeout    *string `json:"shutdown_timeout"`
 	TrustedSubnet      *string `json:"trusted_subnet"`
 }
@@ -46,6 +48,7 @@ func parseServerArgsFromFile() optionalServerArgs {
 		}
 
 		result.Addr = conf.Addr
+		result.RPCAddr = conf.RPCAddr
 		result.StoragePath = conf.StoragePath
 		result.PrivateKey = conf.PrivateKey
 		result.CryptoPrivateKey = conf.CryptoPrivateKey
@@ -53,6 +56,7 @@ func parseServerArgsFromFile() optionalServerArgs {
 		result.IsDev = conf.IsDev
 		result.IsProfilingEnabled = conf.IsProfilingEnabled
 		result.RestoreStorage = conf.RestoreStorage
+		result.EnableRPC = conf.EnableRPC
 
 		if conf.StoreInterval != nil {
 			result.StoreInterval = parseDuration(*conf.StoreInterval)
@@ -79,6 +83,7 @@ type agentConfig struct {
 	Addr               *string `json:"address"`
 	PrivateKey         *string `json:"key"`
 	CryptoPublicKey    *string `json:"crypto_key"`
+	RequestMethod      *string `json:"request_method"`
 	PollInterval       *string `json:"poll_interval"`
 	ReportInterval     *string `json:"report_interval"`
 	ReportRateLimit    *int    `json:"report_rate_limit"`
@@ -109,6 +114,7 @@ func parseAgentArgsFromFile() optionalAgentArgs {
 		result.Addr = conf.Addr
 		result.PrivateKey = conf.PrivateKey
 		result.CryptoPublicKey = conf.CryptoPublicKey
+		result.RequestMethod = conf.RequestMethod
 		result.ReportRateLimit = conf.ReportRateLimit
 		result.IsDev = conf.IsDev
 		result.IsProfilingEnabled = conf.IsProfilingEnabled
