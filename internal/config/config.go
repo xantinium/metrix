@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
+	"net"
 	"strings"
 	"time"
 
@@ -14,16 +16,19 @@ import (
 
 // ServerArgs структура, описывающая аргументы сервера.
 type ServerArgs struct {
+	TrustedSubnet      *net.IPNet
 	Addr               string
+	RPCAddr            string
 	StoragePath        string
 	PrivateKey         string
 	CryptoPrivateKey   string
 	DatabaseConnStr    string
 	StoreInterval      time.Duration
+	ShutdownTimeout    time.Duration
 	IsDev              bool
 	IsProfilingEnabled bool
 	RestoreStorage     bool
-	ShutdownTimeout    time.Duration
+	EnableRPC          bool
 }
 
 // ParseServerArgs парсит агрументы командной строки в ServerArgs.
@@ -35,11 +40,21 @@ func ParseServerArgs() ServerArgs {
 	)
 }
 
+// RequestMethod способ, с помощью которого
+// агент будет выполнять запросы на сервер.
+type RequestMethod = string
+
+const (
+	RequestMethodRest RequestMethod = "rest"
+	RequestMethodRPC  RequestMethod = "rpc"
+)
+
 // AgentArgs структура, описывающая аргументы агента.
 type AgentArgs struct {
 	Addr               string
 	PrivateKey         string
 	CryptoPublicKey    string
+	RequestMethod      RequestMethod
 	PollInterval       int
 	ReportInterval     time.Duration
 	ReportRateLimit    int
@@ -96,6 +111,7 @@ func (addr *netAddress) Set(s string) error {
 
 type optionalServerArgs struct {
 	Addr               *string
+	RPCAddr            *string
 	StoragePath        *string
 	PrivateKey         *string
 	CryptoPrivateKey   *string
@@ -104,7 +120,9 @@ type optionalServerArgs struct {
 	IsDev              *bool
 	IsProfilingEnabled *bool
 	RestoreStorage     *bool
+	EnableRPC          *bool
 	ShutdownTimeout    *time.Duration
+	TrustedSubnet      *net.IPNet
 }
 
 func mergeServerArgs(argsToMerge ...optionalServerArgs) ServerArgs {
@@ -113,6 +131,9 @@ func mergeServerArgs(argsToMerge ...optionalServerArgs) ServerArgs {
 	for _, args := range argsToMerge {
 		if args.Addr != nil {
 			result.Addr = *args.Addr
+		}
+		if args.RPCAddr != nil {
+			result.RPCAddr = *args.RPCAddr
 		}
 		if args.StoragePath != nil && fs.ValidPath(*args.StoragePath) {
 			result.StoragePath = *args.StoragePath
@@ -141,6 +162,12 @@ func mergeServerArgs(argsToMerge ...optionalServerArgs) ServerArgs {
 		if args.ShutdownTimeout != nil && *args.ShutdownTimeout >= 0 {
 			result.ShutdownTimeout = *args.ShutdownTimeout
 		}
+		if args.TrustedSubnet != nil {
+			result.TrustedSubnet = args.TrustedSubnet
+		}
+		if args.EnableRPC != nil {
+			result.EnableRPC = *args.EnableRPC
+		}
 	}
 
 	return result
@@ -150,6 +177,7 @@ type optionalAgentArgs struct {
 	Addr               *string
 	PrivateKey         *string
 	CryptoPublicKey    *string
+	RequestMethod      *string
 	PollInterval       *int
 	ReportInterval     *time.Duration
 	ReportRateLimit    *int
@@ -159,7 +187,9 @@ type optionalAgentArgs struct {
 }
 
 func mergeAgentArgs(argsToMerge ...optionalAgentArgs) AgentArgs {
-	result := AgentArgs{}
+	result := AgentArgs{
+		RequestMethod: RequestMethodRest,
+	}
 
 	for _, args := range argsToMerge {
 		if args.Addr != nil {
@@ -170,6 +200,14 @@ func mergeAgentArgs(argsToMerge ...optionalAgentArgs) AgentArgs {
 		}
 		if args.CryptoPublicKey != nil {
 			result.CryptoPublicKey = *args.CryptoPublicKey
+		}
+		if args.RequestMethod != nil {
+			method, err := parseRequestMethod(*args.RequestMethod)
+			if err != nil {
+				log.Printf("skip request method due err: %v\n", err)
+			} else {
+				result.RequestMethod = method
+			}
 		}
 		if args.PollInterval != nil && *args.PollInterval > 0 {
 			result.PollInterval = *args.PollInterval
@@ -192,4 +230,15 @@ func mergeAgentArgs(argsToMerge ...optionalAgentArgs) AgentArgs {
 	}
 
 	return result
+}
+
+func parseRequestMethod(method string) (RequestMethod, error) {
+	switch method {
+	case string(RequestMethodRest):
+		return RequestMethodRest, nil
+	case string(RequestMethodRPC):
+		return RequestMethodRPC, nil
+	default:
+		return "", fmt.Errorf("unknown request method %q", method)
+	}
 }

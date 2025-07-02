@@ -46,6 +46,16 @@ func easyjson8ceb9162DecodeGithubComXantiniumMetrixInternalConfig(in *jlexer.Lex
 				}
 				*out.Addr = string(in.String())
 			}
+		case "rpc_address":
+			if in.IsNull() {
+				in.Skip()
+				out.RPCAddr = nil
+			} else {
+				if out.RPCAddr == nil {
+					out.RPCAddr = new(string)
+				}
+				*out.RPCAddr = string(in.String())
+			}
 		case "store_file":
 			if in.IsNull() {
 				in.Skip()
@@ -126,6 +136,16 @@ func easyjson8ceb9162DecodeGithubComXantiniumMetrixInternalConfig(in *jlexer.Lex
 				}
 				*out.RestoreStorage = bool(in.Bool())
 			}
+		case "enable_rpc":
+			if in.IsNull() {
+				in.Skip()
+				out.EnableRPC = nil
+			} else {
+				if out.EnableRPC == nil {
+					out.EnableRPC = new(bool)
+				}
+				*out.EnableRPC = bool(in.Bool())
+			}
 		case "shutdown_timeout":
 			if in.IsNull() {
 				in.Skip()
@@ -135,6 +155,16 @@ func easyjson8ceb9162DecodeGithubComXantiniumMetrixInternalConfig(in *jlexer.Lex
 					out.ShutdownTimeout = new(string)
 				}
 				*out.ShutdownTimeout = string(in.String())
+			}
+		case "trusted_subnet":
+			if in.IsNull() {
+				in.Skip()
+				out.TrustedSubnet = nil
+			} else {
+				if out.TrustedSubnet == nil {
+					out.TrustedSubnet = new(string)
+				}
+				*out.TrustedSubnet = string(in.String())
 			}
 		default:
 			in.SkipRecursive()
@@ -157,6 +187,15 @@ func easyjson8ceb9162EncodeGithubComXantiniumMetrixInternalConfig(out *jwriter.W
 			out.RawString("null")
 		} else {
 			out.String(string(*in.Addr))
+		}
+	}
+	{
+		const prefix string = ",\"rpc_address\":"
+		out.RawString(prefix)
+		if in.RPCAddr == nil {
+			out.RawString("null")
+		} else {
+			out.String(string(*in.RPCAddr))
 		}
 	}
 	{
@@ -232,12 +271,30 @@ func easyjson8ceb9162EncodeGithubComXantiniumMetrixInternalConfig(out *jwriter.W
 		}
 	}
 	{
+		const prefix string = ",\"enable_rpc\":"
+		out.RawString(prefix)
+		if in.EnableRPC == nil {
+			out.RawString("null")
+		} else {
+			out.Bool(bool(*in.EnableRPC))
+		}
+	}
+	{
 		const prefix string = ",\"shutdown_timeout\":"
 		out.RawString(prefix)
 		if in.ShutdownTimeout == nil {
 			out.RawString("null")
 		} else {
 			out.String(string(*in.ShutdownTimeout))
+		}
+	}
+	{
+		const prefix string = ",\"trusted_subnet\":"
+		out.RawString(prefix)
+		if in.TrustedSubnet == nil {
+			out.RawString("null")
+		} else {
+			out.String(string(*in.TrustedSubnet))
 		}
 	}
 	out.RawByte('}')
@@ -314,6 +371,16 @@ func easyjson8ceb9162DecodeGithubComXantiniumMetrixInternalConfig1(in *jlexer.Le
 					out.CryptoPublicKey = new(string)
 				}
 				*out.CryptoPublicKey = string(in.String())
+			}
+		case "request_method":
+			if in.IsNull() {
+				in.Skip()
+				out.RequestMethod = nil
+			} else {
+				if out.RequestMethod == nil {
+					out.RequestMethod = new(string)
+				}
+				*out.RequestMethod = string(in.String())
 			}
 		case "poll_interval":
 			if in.IsNull() {
@@ -414,6 +481,15 @@ func easyjson8ceb9162EncodeGithubComXantiniumMetrixInternalConfig1(out *jwriter.
 			out.RawString("null")
 		} else {
 			out.String(string(*in.CryptoPublicKey))
+		}
+	}
+	{
+		const prefix string = ",\"request_method\":"
+		out.RawString(prefix)
+		if in.RequestMethod == nil {
+			out.RawString("null")
+		} else {
+			out.String(string(*in.RequestMethod))
 		}
 	}
 	{
