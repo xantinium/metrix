@@ -161,13 +161,17 @@ func (s *MetrixServer) Stop(timeout time.Duration) error {
 	var group *errgroup.Group
 	group, ctx = errgroup.WithContext(ctx)
 
-	group.Go(func() error {
-		return s.restServer.Stop(ctx)
-	})
+	if s.restServer != nil {
+		group.Go(func() error {
+			return s.restServer.Stop(ctx)
+		})
+	}
 
-	group.Go(func() error {
-		return s.rpcServer.Stop(ctx)
-	})
+	if s.rpcServer != nil {
+		group.Go(func() error {
+			return s.rpcServer.Stop(ctx)
+		})
+	}
 
 	return group.Wait()
 }
